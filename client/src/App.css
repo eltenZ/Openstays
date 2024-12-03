@@ -5,73 +5,96 @@ body {
   font-family: Arial, sans-serif;
   background-color: #f9f9f9;
 }
-
-header {
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #f0f0f0;
   padding: 10px 20px;
-  border-radius: 10px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 999;
+  background-color: #f8f9fa;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+}
+/* Logo Styling */
 .logo {
-  font-size: 1.5rem;
+  font-family: "Arial", sans-serif;
+  font-size: 24px;
   font-weight: bold;
+  display: flex;
+  align-items: center;
+  color: #333; /* Default text color */
 }
 
-.logo span.logo-open {
-  color: lightgray;
+.logo-open {
+  color: #171D29; /* Light gray for "Open" */
 }
 
-.logo span.logo-stays {
-  color: navy;
+.logo-stays {
+  color: #67D3DF; /* Navy blue for "stays" */
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  position: relative; /* Required for dropdown positioning */
 }
 
 .menu-button {
-  background-color: #212529;
-  color: #f8f9fa;
+  background: none;
   border: none;
-  padding: 10px 20px;
+  font-size: 24px;
   cursor: pointer;
-  border-radius: 5px;
-  font-size: 1rem;
+}
+
+.menu-button i {
+  color: #000; /* Change to the desired color */
 }
 
 .menu-button:focus {
   outline: none;
 }
 
-/* Navbar Styles */
 .navbar ul {
   list-style: none;
   display: none;
   flex-direction: column;
   gap: 10px;
   position: absolute;
-  top: 50px;
-  left: -120px; /* Dropdown aligns left of button */
+  top: 50px; /* Adjust dropdown below button */
+  right: 0; /* Align dropdown to the right of the button */
   background-color: #f0f0f0;
   padding: 10px;
   border-radius: 10px;
   box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
 }
 
-.navbar ul.show {
+.navbar.show ul {
   display: flex;
+}
+
+.navbar ul li {
+  text-align: left;
+  display: flex;
+  align-items: center; /* Align icon and text vertically */
+  gap: 10px; /* Space between the icon and text */
 }
 
 .navbar ul li a {
   text-decoration: none;
   color: #555;
+  font-size: 1rem;
+  display: flex;
+  align-items: center; /* Keep the icon and text aligned */
 }
 
-.navbar ul li a:hover {
-  color: #007bff;
+.navbar i {
+  font-size: 1.2rem; /* Adjust icon size */
+}
+
+.navbar span {
+  font-size: 1rem; /* Adjust text size */
 }
 
 /* Footer Styles */

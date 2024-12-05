@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Header from '../components/Header';
+
 import Footer from '../components/Footer';
 import './Home.css'; // Add CSS for cards, images, buttons, etc.
 
@@ -33,10 +33,10 @@ const Home = () => {
 
     return (
         <div className="home">
-            <Header />
+            <header />
             <main>
                 <section className="accommodations">
-                    <h2>Available Accommodations</h2>
+                    
                     <div className="accommodation-cards">
                         {accommodations.map((accommodation) => (
                             <div className="card" key={accommodation.id}>

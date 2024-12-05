@@ -2,14 +2,14 @@ import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AccommodationDetails from "./pages/AccommodationDetails";
 import Home from "./pages/Home";
-import { HomeIcon, MapIcon, CogIcon, SunIcon } from "@heroicons/react/outline"; // Import Heroicons
-import menuIcon from "./assets/icons/menu.svg"; // Correct path to the menu.svg icon
+import { HomeIcon, MapIcon, CogIcon, SunIcon } from "@heroicons/react/outline";
+import menuIcon from "./assets/icons/menu.svg";
 import "./App.css";
 
 const App = () => {
   return (
     <Router>
-      <Header />
+      <Header /> {/* Global Header */}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/accommodation/:id" element={<AccommodationDetails />} />
@@ -41,7 +41,7 @@ const Header = () => {
           onClick={toggleMenu}
           aria-label="Toggle navigation menu"
         >
-          <img src={menuIcon} alt="Menu" className="menu-icon" /> {/* Use the correct path for menu.svg */}
+          <img src={menuIcon} alt="Menu" className="menu-icon" />
         </button>
         <nav className={`navbar ${menuVisible ? "show" : ""}`}>
           <ul>

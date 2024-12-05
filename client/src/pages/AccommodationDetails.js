@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import './AccommodationDetails.css'; // Ensure styling for details page.
+import './AccommodationDetails.css'; // Ensure styling is available
 
 const AccommodationDetails = () => {
-    const { id } = useParams(); // Get ID from route params.
+    const { id } = useParams(); // Get ID from route parameters
     const [accommodation, setAccommodation] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -29,22 +27,22 @@ const AccommodationDetails = () => {
         fetchDetails();
     }, [id]);
 
-    if (loading) return <div className="loading">Loading accommodation details...</div>;
+    if (loading) return <div className="loading">Loading...</div>;
     if (error) return <div className="error">{error}</div>;
 
     return (
         <div className="accommodation-details">
-            <Header />
+            
             <main>
                 <h1>{accommodation.name}</h1>
-                <img src={accommodation.image} alt={accommodation.name} className="details-image" />
+                <img src={accommodation.image} alt={accommodation.name} />
                 <p className="description">{accommodation.description}</p>
                 <p className="address">Address: {accommodation.address}</p>
-                <p className="price">Price: {accommodation.price} per night</p>
+                <p className="price">Price: {accommodation.price}</p>
                 <button className="book-now-btn">Book Now</button>
-                <Link to="/" className="back-btn">Back to Home</Link>
+                <Link to="/" className="back-btn">Back to Home</Link> {/* Avoid duplicate links */}
             </main>
-            <Footer />
+            
         </div>
     );
 };

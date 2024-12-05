@@ -6,14 +6,11 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors()); // Enable CORS for cross-origin requests
-app.use(express.json()); // Parse incoming JSON payloads
-app.use(bodyParser.urlencoded({ extended: true })); // Parse URL-encoded payloads
+app.use(cors());
+app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, 'client', 'build')));
-
-// Placeholder data for accommodations (replace with real database integration)
+// Placeholder data for accommodations
 const accommodations = [
   {
     id: 1,
@@ -42,12 +39,10 @@ const accommodations = [
 ];
 
 // API Routes
-// Get all accommodations
 app.get('/api/accommodations', (req, res) => {
   res.json(accommodations);
 });
 
-// Get accommodation by ID
 app.get('/api/accommodation/:id', (req, res) => {
   const accommodation = accommodations.find(
     (item) => item.id === parseInt(req.params.id, 10)
@@ -60,11 +55,7 @@ app.get('/api/accommodation/:id', (req, res) => {
 });
 
 // Serve React frontend
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
-});
-
-// Handle client-side routing for any other route
+app.use(express.static(path.join(__dirname, 'client', 'build')));
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
 });

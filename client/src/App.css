@@ -5,6 +5,7 @@ body {
   font-family: Arial, sans-serif;
   background-color: #f9f9f9;
 }
+
 .header {
   display: flex;
   justify-content: space-between;
@@ -18,6 +19,7 @@ body {
   display: flex;
   align-items: center;
 }
+
 /* Logo Styling */
 .logo {
   font-family: "Arial", sans-serif;
@@ -35,21 +37,21 @@ body {
 .logo-stays {
   color: #67D3DF; /* Navy blue for "stays" */
 }
+
 .header-right {
   display: flex;
   align-items: center;
-  position: relative; /* Required for dropdown positioning */
+  position: relative;
 }
 
 .menu-button {
-  background: none;
-  border: none;
-  font-size: 24px;
+  width: 2rem; /* Adjust icon size */
+  height: 2rem;
+  background-color: #171D29; /* Circle color */
+  border-radius: 50%; /* Make the icon circular */
+  padding: 0px; /* Add padding inside the circle */
+  color: white;
   cursor: pointer;
-}
-
-.menu-button i {
-  color: #000; /* Change to the desired color */
 }
 
 .menu-button:focus {
@@ -59,42 +61,52 @@ body {
 .navbar ul {
   list-style: none;
   display: none;
-  flex-direction: column;
-  gap: 10px;
-  position: absolute;
-  top: 50px; /* Adjust dropdown below button */
-  right: 0; /* Align dropdown to the right of the button */
-  background-color: #f0f0f0;
-  padding: 10px;
-  border-radius: 10px;
-  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .navbar.show ul {
   display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 20px;
+  position: absolute;
+  top: 0px;
+  right: 0;
+  padding: 10px;
+  border-radius: 10px;
 }
 
 .navbar ul li {
-  text-align: left;
+  text-align: right;
   display: flex;
-  align-items: center; /* Align icon and text vertically */
-  gap: 10px; /* Space between the icon and text */
+  justify-content: flex-end;
+  align-items: right;
+  gap: 15px;
+  padding: 5px 0;
 }
 
 .navbar ul li a {
   text-decoration: none;
   color: #555;
-  font-size: 1rem;
+  font-size: 2rem;
   display: flex;
-  align-items: center; /* Keep the icon and text aligned */
+  align-items: left;
+  gap: 10px;
+  justify-content: space-between;
+  flex-direction: row-reverse;
 }
 
-.navbar i {
-  font-size: 1.2rem; /* Adjust icon size */
+.navbar svg {
+  width: 1.5rem; /* Adjust icon size */
+  height: 1.5rem;
+  background-color: #171D29; /* Circle color */
+  border-radius: 50%; /* Make the icon circular */
+  padding: 10px; /* Add padding inside the circle */
+  color: white;
 }
 
 .navbar span {
-  font-size: 1rem; /* Adjust text size */
+  display: none;
+  font-size: 1rem;
 }
 
 /* Footer Styles */
@@ -106,9 +118,4 @@ footer {
   position: fixed;
   bottom: 0;
   width: 100%;
-}
-
-/* Accommodation Cards and Footer Gap */
-.accommodation-cards {
-  margin-bottom: 80px; /* Adds gap between the cards and footer */
 }

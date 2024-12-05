@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom"; // Correct the import
-import AccommodationDetails from "./pages/AccommodationDetails"; // Fix truncated import
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import AccommodationDetails from "./pages/AccommodationDetails";
 import Home from "./pages/Home";
-import "./App.css"; // Ensure the styles are applied
+import { HomeIcon, MapIcon, CogIcon, SunIcon } from "@heroicons/react/outline"; // Import Heroicons
+import menuIcon from "./assets/icons/menu.svg"; // Correct path to the menu.svg icon
+import "./App.css";
 
 const App = () => {
   return (
@@ -35,40 +37,40 @@ const Header = () => {
       </div>
       <div className="header-right">
         <button
-  className="menu-button"
-  onClick={toggleMenu}
-  aria-label="Toggle navigation menu"
->
-  <i className="fas fa-bars"></i> {/* Menu icon */}
-</button>
+          className="menu-button"
+          onClick={toggleMenu}
+          aria-label="Toggle navigation menu"
+        >
+          <img src={menuIcon} alt="Menu" className="menu-icon" /> {/* Use the correct path for menu.svg */}
+        </button>
         <nav className={`navbar ${menuVisible ? "show" : ""}`}>
-  <ul>
-    <li>
-      <a href="/">
-        <i className="fas fa-home"></i> {/* Accommodation icon */}
-        <span>Accommodations</span>
-      </a>
-    </li>
-    <li>
-      <a href="/trips">
-        <i className="fas fa-map-marker-alt"></i> {/* Trips icon */}
-        <span>Trips</span>
-      </a>
-    </li>
-    <li>
-      <a href="/picnics">
-        <i className="fas fa-picnic-table"></i> {/* Picnics icon */}
-        <span>Picnics</span>
-      </a>
-    </li>
-    <li>
-      <a href="/services">
-        <i className="fas fa-cogs"></i> {/* Services icon */}
-        <span>Services</span>
-      </a>
-    </li>
-  </ul>
-</nav>
+          <ul>
+            <li className="tab">
+              <a href="/">
+                <HomeIcon className="heroicon" />
+                <span>Accommodations</span>
+              </a>
+            </li>
+            <li className="tab">
+              <a href="/trips">
+                <MapIcon className="heroicon" />
+                <span>Trips</span>
+              </a>
+            </li>
+            <li className="tab">
+              <a href="/picnics">
+                <SunIcon className="heroicon" />
+                <span>Picnics</span>
+              </a>
+            </li>
+            <li className="tab">
+              <a href="/services">
+                <CogIcon className="heroicon" />
+                <span>Services</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
       </div>
     </header>
   );

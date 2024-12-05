@@ -1,53 +1,66 @@
-import React from 'react';
-import './Home.css'; // Ensure you have specific styles for the home page if needed.
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import './Home.css'; // Add CSS for cards, images, buttons, etc.
 
 const Home = () => {
-  const accommodations = [
-    {
-      id: 1,
-      name: 'Cozy Beachfront Villa',
-      description: 'Experience luxury living with ocean views.',
-      price: 'KES 15,000 per night',
-      image: 'villa.jpg', // Replace with actual image path or URL.
-    },
-    {
-      id: 2,
-      name: 'Modern City Apartment',
-      description: 'Located in the heart of the city.',
-      price: 'KES 10,000 per night',
-      image: 'apartment.jpg', // Replace with actual image path or URL.
-    },
-    {
-      id: 3,
-      name: 'Rustic Cabin Retreat',
-      description: 'Perfect for nature lovers and adventurers.',
-      price: 'KES 8,000 per night',
-      image: 'cabin.jpg', // Replace with actual image path or URL.
-    },
-  ];
+    const [accommodations, setAccommodations] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-  return (
-    <main className="home">
-      <section className="accommodations">
-       
-        <div className="accommodation-cards">
-          {accommodations.map((accommodation) => (
-            <div className="card" key={accommodation.id}>
-              <img src={accommodation.image} alt={accommodation.name} className="card-image" />
-              <div className="card-content">
-                <h3>{accommodation.name}</h3>
-                <p>{accommodation.description}</p>
-                <p className="price">{accommodation.price}</p>
-                <a href={`/accommodation/${accommodation.id}`} className="btn">
-                  View Details
-                </a>
-              </div>
-            </div>
-          ))}
+    useEffect(() => {
+        // Fetch all accommodations from the backend API
+        const fetchAccommodations = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/accommodations');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch accommodations.');
+                }
+                const data = await response.json();
+                setAccommodations(data);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchAccommodations();
+    }, []);
+
+    if (loading) return <div className="loading">Loading accommodations...</div>;
+    if (error) return <div className="error">{error}</div>;
+
+    return (
+        <div className="home">
+            <Header />
+            <main>
+                <section className="accommodations">
+                    <h2>Available Accommodations</h2>
+                    <div className="accommodation-cards">
+                        {accommodations.map((accommodation) => (
+                            <div className="card" key={accommodation.id}>
+                                <img
+                                    src={accommodation.image}
+                                    alt={accommodation.name}
+                                    className="card-image"
+                                />
+                                <div className="card-content">
+                                    <h3>{accommodation.name}</h3>
+                                    <p>{accommodation.description}</p>
+                                    <p className="price">Price: {accommodation.price} per night</p>
+                                    <Link to={`/accommodation/${accommodation.id}`} className="btn">
+                                        View Details
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            </main>
+            <Footer />
         </div>
-      </section>
-    </main>
-  );
+    );
 };
 
 export default Home;

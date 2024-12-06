@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-import Footer from '../components/Footer';
 import './Home.css'; // Add CSS for cards, images, buttons, etc.
 
 const Home = () => {
@@ -33,15 +32,14 @@ const Home = () => {
 
     return (
         <div className="home">
-            <header />
+            
             <main>
                 <section className="accommodations">
-                    
                     <div className="accommodation-cards">
                         {accommodations.map((accommodation) => (
                             <div className="card" key={accommodation.id}>
                                 <img
-                                    src={accommodation.image}
+                                    src={accommodation.image_url}
                                     alt={accommodation.name}
                                     className="card-image"
                                 />
@@ -58,7 +56,7 @@ const Home = () => {
                     </div>
                 </section>
             </main>
-            <Footer />
+            
         </div>
     );
 };

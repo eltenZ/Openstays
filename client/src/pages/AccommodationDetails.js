@@ -32,17 +32,19 @@ const AccommodationDetails = () => {
 
     return (
         <div className="accommodation-details">
-            
             <main>
                 <h1>{accommodation.name}</h1>
-                <img src={accommodation.image} alt={accommodation.name} />
+                <img src={accommodation.image_url} alt={accommodation.name} className="detail-image" />
                 <p className="description">{accommodation.description}</p>
-                <p className="address">Address: {accommodation.address}</p>
-                <p className="price">Price: {accommodation.price}</p>
+                <p className="address"><strong>Address:</strong> {accommodation.location}</p>
+                <p className="price"><strong>Price:</strong> {accommodation.price} per night</p>
+                <p className="features"><strong>Features:</strong> {accommodation.amenities}</p>
+                <p className="availability">
+                    <strong>Availability:</strong> {accommodation.availability}
+                </p>
                 <button className="book-now-btn">Book Now</button>
-                <Link to="/" className="back-btn">Back to Home</Link> {/* Avoid duplicate links */}
+                <Link to="/" className="back-btn">Back to Home</Link>
             </main>
-            
         </div>
     );
 };

@@ -2,55 +2,49 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const { Pool } = require('pg');
+
 const app = express();
 const port = process.env.PORT || 5000;
+
+// PostgreSQL Database connection
+const pool = new Pool({
+  user: 'u0_a367',
+  host: 'localhost',
+  database: 'openstays_db',
+  password: null, // No password
+  port: 5432,
+});
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Placeholder data for accommodations
-const accommodations = [
-  {
-    id: 1,
-    name: 'Cozy Beachfront Villa',
-    description: 'Experience luxury living with ocean views.',
-    price: 'KES 15,000 per night',
-    image: '/images/villa.jpg',
-    address: 'Diani Beach, Kwale County',
-  },
-  {
-    id: 2,
-    name: 'Modern City Apartment',
-    description: 'Located in the heart of the city.',
-    price: 'KES 10,000 per night',
-    image: '/images/apartment.jpg',
-    address: 'Nairobi City',
-  },
-  {
-    id: 3,
-    name: 'Rustic Cabin Retreat',
-    description: 'Perfect for nature lovers and adventurers.',
-    price: 'KES 8,000 per night',
-    image: '/images/cabin.jpg',
-    address: 'Maasai Mara, Narok County',
-  },
-];
-
-// API Routes
-app.get('/api/accommodations', (req, res) => {
-  res.json(accommodations);
+// API route to fetch all accommodations
+app.get('/api/accommodations', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM accommodations');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching accommodations:', err.message);
+    res.status(500).json({ error: 'Failed to fetch accommodations.' });
+  }
 });
 
-app.get('/api/accommodation/:id', (req, res) => {
-  const accommodation = accommodations.find(
-    (item) => item.id === parseInt(req.params.id, 10)
-  );
-  if (accommodation) {
-    res.json(accommodation);
-  } else {
-    res.status(404).json({ error: 'Accommodation not found' });
+// API route to fetch accommodation by ID
+app.get('/api/accommodation/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('SELECT * FROM accommodations WHERE id = $1', [id]);
+    if (result.rows.length > 0) {
+      res.json(result.rows[0]);
+    } else {
+      res.status(404).json({ error: 'Accommodation not found.' });
+    }
+  } catch (err) {
+    console.error('Error fetching accommodation:', err.message);
+    res.status(500).json({ error: 'Failed to fetch accommodation.' });
   }
 });
 

@@ -33,11 +33,11 @@ const AccommodationDetails = () => {
     return (
         <div className="accommodation-details">
             <main>
-                <h1>{accommodation.name}</h1>
-                <img src={accommodation.image_url} alt={accommodation.name} className="detail-image" />
+                <h1>{accommodation.title}</h1>
+                <img src={accommodation.image_urls} alt={accommodation.title} className="detail-image" />
                 <p className="description">{accommodation.description}</p>
                 <p className="address"><strong>Address:</strong> {accommodation.location}</p>
-                <p className="price"><strong>Price:</strong> {accommodation.price} per night</p>
+                <p className="price"><strong>:</strong> {accommodation.price_per_night}/ night</p>
                 <p className="features"><strong>Features:</strong> {accommodation.amenities}</p>
                 <p className="availability">
                     <strong>Availability:</strong> {accommodation.availability}
@@ -50,3 +50,4 @@ const AccommodationDetails = () => {
 };
 
 export default AccommodationDetails;
+

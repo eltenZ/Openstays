@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+
 import './Home.css'; // Add CSS for cards, images, buttons, etc.
 
 const Home = () => {
@@ -26,52 +27,39 @@ const Home = () => {
         fetchAccommodations();
     }, []);
 
-    // Function to truncate description
-    const truncateDescription = (description, maxLength = 75) => {
-        if (description.length > maxLength) {
-            return description.slice(0, maxLength) + '...'; // Truncate and add ellipsis
-        }
-        return description;
-    };
-
     if (loading) return <div className="loading">Loading accommodations...</div>;
     if (error) return <div className="error">{error}</div>;
 
     return (
         <div className="home">
+            
             <main>
                 <section className="accommodations">
                     <div className="accommodation-cards">
                         {accommodations.map((accommodation) => (
                             <div className="card" key={accommodation.id}>
                                 <img
-                                    src={accommodation.image_url}
-                                    alt={accommodation.name}
+                                    src={accommodation.image_urls}
+                                    alt={accommodation.title}
                                     className="card-image"
                                 />
                                 <div className="card-content">
-                                    <h3>{accommodation.name}</h3>
-                                    <p>{truncateDescription(accommodation.description)}</p> {/* Truncate the description */}
-                                    
-                                    <div className="room-and-guests">
-                                        <span>{accommodation.rooms} bedrooms</span>
-                                        <span>{accommodation.capacity} guests</span>
-                                    </div>
-
-                                    <div className="price-and-button">
-                                        <span className="price">Kes {accommodation.price}/night</span>
-                                        <Link to={`/accommodation/${accommodation.id}`} className="btn">
-                                            Book
-                                        </Link>
-                                    </div>
+                                    <h3>{accommodation.title}</h3>
+                                    <p>{accommodation.description}</p>
+                                    <p className="price">: {accommodation.price_per_night}/ night</p>
+                                    <Link to={`/accommodation/${accommodation.id}`} className="btn">
+                                        View Details
+                                    </Link>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </section>
             </main>
+            
         </div>
     );
 };
 
 export default Home;
+

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AccommodationDetails from "./pages/AccommodationDetails";
 import Home from "./pages/Home";
+import AddAccommodation from "./pages/AddAccommodation";
 import { HomeIcon, MapIcon, CogIcon, SunIcon } from "@heroicons/react/outline";
 import menuIcon from "./assets/icons/menu.svg";
 import "./App.css";
@@ -13,7 +14,8 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/accommodation/:id" element={<AccommodationDetails />} />
-        {/* Add future routes for Trips, Picnics, Services */}
+        <Route path="/add-accommodation" element={<AddAccommodation />} />
+        {/* Add future routes for Trips, Picnics, Services here */}
       </Routes>
       <Footer />
     </Router>
@@ -67,6 +69,11 @@ const Header = () => {
               <a href="/services">
                 <CogIcon className="heroicon" />
                 <span>Services</span>
+              </a>
+            </li>
+            <li className="tab">
+              <a href="/add-accommodation">
+                <span>Add Accommodation</span>
               </a>
             </li>
           </ul>

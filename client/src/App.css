@@ -1,18 +1,19 @@
-/* General Styles */
+/* App.css */
+
 body {
+  font-family: sans-serif;
   margin: 0;
   padding: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f9f9f9;
+  background-color: #f9f9f9; 
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
+  padding: 1rem 2rem; 
   background-color: #f8f9fa;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .header-left {
@@ -20,22 +21,20 @@ body {
   align-items: center;
 }
 
-/* Logo Styling */
 .logo {
-  font-family: "Arial", sans-serif;
-  font-size: 24px;
+  font-size: 1.5rem; 
   font-weight: bold;
+  color: #333; 
   display: flex;
   align-items: center;
-  color: #333; /* Default text color */
 }
 
 .logo-open {
-  color: #171D29; /* Light gray for "Open" */
+  color: #171D29; 
 }
 
 .logo-stays {
-  color: #67D3DF; /* Navy blue for "stays" */
+  color: #67D3DF; 
 }
 
 .header-right {
@@ -45,83 +44,66 @@ body {
 }
 
 .menu-button {
-  width: 2rem; /* Adjust icon size */
+  width: 2rem;
   height: 2rem;
-  background-color: #171D29; /* Circle color */
-  border-radius: 50%; /* Make the icon circular */
-  padding: 0px; /* Add padding inside the circle */
-  color: white;
+  background-color: #171D29;
+  border-radius: 50%;
+  padding: 0;
   cursor: pointer;
+  border: none; 
 }
 
 .menu-button:focus {
   outline: none;
 }
 
+.navbar {
+  position: absolute;
+  top: 60px; 
+  right: 0;
+  background-color: #fff;
+  padding: 1rem;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: none; 
+}
+
+.navbar.show {
+  display: block; 
+}
+
 .navbar ul {
   list-style: none;
-  display: none;
+  padding: 0;
 }
 
-.navbar.show ul {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  
-  position: absolute;
-  top: 0px;
-  right: 0;
-  padding: 10px;
-  border-radius: 10px;
+.navbar li {
+  margin-bottom: 1rem; 
 }
 
-.navbar ul li {
-  text-align: right;
-  display: flex;
-  justify-content: flex-end;
-  align-items: right;
-  gap: 15px;
-  padding: 5px 0;
-}
-
-.navbar ul li a {
+.navbar a {
   text-decoration: none;
-  color: #555;
-  font-size: 1.5rem;
+  color: #333;
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: auto;
-  background-color: rgba(23, 29, 41, 0.4); /* 50% transparent */
-  justify-content: space-between;
-  border-radius: 50px;
-  padding: 5px 5px;
-  flex-direction: row-reverse;
+  gap: 0.5rem; 
 }
 
 .navbar svg {
-  width: 1.5rem; /* Adjust icon size */
+  width: 1.5rem;
   height: 1.5rem;
-  background-color: white; /* Circle color */
-  border-radius: 50%; /* Make the icon circular */
-  padding: 10px; /* Add padding inside the circle */
-  color: #171D29;
-}
-
-.navbar span {
-  font-size: 1rem;
-  font-weight: bold;
-  color: white;  
 }
 
 /* Footer Styles */
 footer {
-  background-color: white;
+  background-color: #fff;
   text-align: center;
-  padding: 15px 0;
+  padding: 5px 0;
   border-top: 1px solid #ddd;
   position: fixed;
   bottom: 0;
   width: 100%;
-  height: 20px;
+  height: 30px;
+  margin-top: 2rem;
 }
+

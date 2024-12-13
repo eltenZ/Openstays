@@ -1,99 +1,160 @@
+/* General layout and styling */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f7f7f7;
+  margin-bottom: 10px;
+}
+
+/* Home page container */
 .home {
-    font-family: Arial, sans-serif;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    padding: 0 16px; /* Add padding to the home container */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
 }
 
-.accommodation-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Adjust minimum card size */
-    gap: 16px;
-    justify-content: center;
-    max-width: 1200px; /* Limit max width of grid container */
-    margin: 0 auto; /* Center the grid on larger screens */
+/* Filters section */
+.filters {
+  width: 100%;
+  max-width: 900px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 40px;
 }
 
-.card {
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s;
-    overflow: hidden;
-    flex-grow: 1;
+.filters h2 {
+  margin-bottom: 20px;
 }
 
-.card:hover {
-    transform: scale(1.05);
+.filter-group {
+  margin-bottom: 20px;
+}
+
+.filter-group label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.filter-group input[type="number"],
+.filter-group input[type="checkbox"] {
+  margin-top: 5px;
+}
+
+/* Date picker styling */
+.react-datepicker-wrapper {
+  display: block;
+}
+
+.react-datepicker__triangle {
+  display: none;
+}
+
+.react-datepicker__calendar {
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.react-datepicker__day--selected {
+  background-color: #007bff;
+  color: white;
+}
+
+.react-datepicker__day:hover {
+  background-color: #f0f0f0;
+}
+
+/* Accommodation Cards */
+.accommodations {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.accommodation-card {
+  background-color: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+}
+
+.accommodation-card:hover {
+  transform: scale(1.05);
 }
 
 .card-image {
-    width: 100%;
-    height: 370px;
-    object-fit: cover;
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
 }
 
 .card-content {
-    padding: 12px; /* Reduced padding for less space between card contents */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    flex-grow: 1;
-    gap: 8px; /* Reduce spacing between elements */
+  padding: 15px;
 }
 
-.room-and-guests {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 6px; /* Reduced margin for less vertical spacing */
-    font-size: 14px;
-    color: #555;
+.card-content h3 {
+  font-size: 1rem;
+  margin-bottom: 10px;
 }
 
-.price-and-button {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: auto;
-    margin-top: 8px; /* Reduced top margin for tighter layout */
+.card-content .description {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 10px;
 }
 
-.price {
-    font-weight: bold;
-    color: #007BFF;
-    font-size: 16px;
+.card-content .details {
+  font-size: 0.9rem;
+  color: #777;
+  margin-bottom: 10px;
 }
 
-.btn {
-    display: inline-block;
-    padding: 8px 16px;
-    color: #fff;
-    background-color: #007BFF;
-    border: none;
-    border-radius: 20px; /* Updated border radius */
-    text-decoration: none;
-    text-align: center;
+.card-content .price-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.2rem;
 }
 
-.btn:hover {
-    background-color: #0056b3;
+
+.view-details-btn {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 20px;
+  transition: background-color 0.3s ease;
 }
 
+.view-details-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Loading/Error state */
 .loading, .error {
-    text-align: center;
-    font-size: 1.2em;
+  font-size: 1.5rem;
+  color: #ff6347;
+  text-align: center;
+  margin-top: 20px;
 }
 
-/* Add media query for small screens */
-@media (max-width: 600px) {
-    .accommodation-cards {
-        grid-template-columns: 1fr; /* Make each card take full width on small screens */
-        padding: 0; /* Remove extra padding */
-    }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .filters {
+    padding: 15px;
+  }
 
-    .card {
-        margin: 0 auto; /* Center cards on small screens */
-    }
+  .accommodations {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+
+  .accommodation-card {
+    margin-bottom: 10px;
+  }
 }

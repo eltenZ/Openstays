@@ -1,67 +1,92 @@
+/* AccommodationDetails.css */
+
 .accommodation-details {
-    font-family: Arial, sans-serif;
-    padding: 16px;
-    background-color: #f9f9f9;
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-    width: 100%;
+  display: flex;
+  justify-content: space-between;
+  margin: 2rem auto;
+  max-width: 960px;
 }
 
-.main-content {
-    margin-top: 150px; /* Ensures content starts below the header */
+.image-section {
+  flex: 0 0 30%; 
+  margin-right: 2rem;
 }
 
-.accommodation-details h1 {
-    font-size: 2rem;
-    color: #007BFF;
-    margin-bottom: 16px;
+.image-section img {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
 }
 
-.accommodation-image {
-    width: 100%;
-    height: 300px;
-    object-fit: cover;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 16px;
+.details-section {
+  flex: 1;
 }
 
-.description,
-.address,
-.price {
-    font-size: 1rem;
-    color: #555;
-    line-height: 1.5;
-    margin-bottom: 16px;
+.details-section h1 {
+  margin-bottom: 1rem;
 }
 
-.book-now-btn,
-.back-btn {
-    display: inline-block;
-    margin-top: 16px;
-    padding: 10px 20px;
-    font-size: 1rem;
-    color: #fff;
-    background-color: #007BFF;
-    border: none;
-    border-radius: 4px;
-    text-decoration: none;
-    text-align: center;
-    transition: background-color 0.3s;
+.details-section .description {
+  margin-bottom: 1.5rem;
 }
 
-.book-now-btn:hover,
-.back-btn:hover {
-    background-color: #0056b3;
+.details-section .rooms-guests {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.details-section .amenities {
+  margin-bottom: 1.5rem;
+}
+
+.details-section .amenities ul {
+  list-style: none;
+  padding: 0;
+}
+
+.details-section .calendar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.details-section .calendar input[type="date"] {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+.details-section .price-section,
+.details-section .total-cost {
+  margin-bottom: 1rem;
+}
+
+.book-now-btn {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  background-color: #007bff;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 3px;
+  transition: background-color 0.3s ease;
+}
+
+.book-now-btn:hover {
+  background-color: #0062cc;
+}
+
+/* Loading and Error States */
+
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #555;
 }
 
 .error {
-    color: red;
-    font-size: 1.2rem;
+  color: #c0392b;
+  font-weight: bold;
+  text-align: center;
 }
 
-.loading {
-    font-size: 1.2rem;
-    color: blue;
-}

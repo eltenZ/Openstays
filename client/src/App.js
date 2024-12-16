@@ -19,7 +19,7 @@ const App = () => {
           {/* Add future routes for Trips, Picnics, Services */}
         </Routes>
       </main>
-      <Footer />
+      
     </Router>
   );
 };
@@ -85,13 +85,6 @@ const Header = () => {
   );
 };
 
-const Footer = () => {
-  return (
-    <footer>
-      <p>&copy; 2024 Openstays. All rights reserved.</p> 
-    </footer>
-  );
-};
 
 export default App;
 

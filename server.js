@@ -72,6 +72,61 @@ app.get('/api/accommodation/:id', async (req, res) => {
   }
 });
 
+//API availability
+app.get('/api/availability', async (req, res) => {
+  const { accommodation_id, start_date, end_date } = req.query;
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM availability
+       WHERE accommodation_id = $1
+         AND start_date <= $2
+         AND end_date >= $3
+         AND is_available = true`,
+      [accommodation_id, start_date, end_date]
+    );
+
+    if (rows.length > 0) {
+      res.json({ available: true, availability: rows });
+    } else {
+      res.json({ available: false });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to check availability' });
+  }
+});
+
+//API bookings
+app.post('/api/bookings', async (req, res) => {
+  const { accommodation_id, user_id, start_date, end_date } = req.body;
+
+  // Check if the accommodation is available during the requested dates
+  const { rows: availabilityRows } = await pool.query(
+    `SELECT * FROM availability
+     WHERE accommodation_id = $1
+       AND start_date <= $2
+       AND end_date >= $3
+       AND is_available = true`,
+    [accommodation_id, start_date, end_date]
+  );
+
+  if (availabilityRows.length === 0) {
+    return res.status(400).json({ error: 'Accommodation is not available for the selected dates' });
+  }
+
+  // Proceed with booking creation
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO bookings (accommodation_id, user_id, start_date, end_date, num_guests, total_price, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'Pending Payment') RETURNING *`,
+      [accommodation_id, user_id, start_date, end_date, num_guests, total_price]
+    );
+
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create booking' });
+  }
+});
 // API route to upload accommodation data with images
 app.post('/api/accommodations', upload.array('images', 10), async (req, res) => {
   const { title, description, price_per_night, location, city, country, max_guests } = req.body;

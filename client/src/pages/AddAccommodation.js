@@ -307,7 +307,7 @@ const handleSubmit = async (e) => {
               type="file"
               id="imageUrls"
               name="imageUrls"
-              accept="image/*"
+              accept="image"
               multiple
               onChange={handleChange}
               className={`mt-1 block w-full p-2 border rounded-md ${errors.imageUrls ? 'border-red-500' : 'border-gray-300'} focus:ring-blue-500`}
@@ -355,7 +355,7 @@ const handleSubmit = async (e) => {
           <div className="mt-8 flex justify-end gap-4">
             <button
               type="button"
-              onClick={resetForm}
+              
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Reset
@@ -367,12 +367,13 @@ const handleSubmit = async (e) => {
             >
               {isSubmitting ? "Submitting..." : "Submit"}
             </button>
-          </div>
-        </div>
-	</form>
+          </div>	        
       </form>
-    </main>
+	</div>
+	</div>
+    
   );
 }
 
-render(<AccommodationForm />, document.getElementById("root"));
+
+export default AddAccommodation;

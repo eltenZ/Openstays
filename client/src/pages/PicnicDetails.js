@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import SuccessModal from "../components/SuccessModal"; // Import the SuccesModal
 
-const PicnicDetails = () => {
+const PicnicDetails = ({ addBookingItem }) => {
+const [isModalOpen, setIsModalOpen] = useState(false);
   const { id } = useParams();
   const [picnic, setPicnic] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -10,7 +12,7 @@ const PicnicDetails = () => {
   useEffect(() => {
     const fetchPicnicDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/picnics/${id}`);
+        const response = await fetch(`http://192.168.24.100:5000/api/picnics/${id}`);
         if (!response.ok) {
           throw new Error("Failed to fetch picnic details.");
         }
@@ -29,6 +31,21 @@ const PicnicDetails = () => {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
   if (!picnic) return <div>No picnic found.</div>;
+
+// Function to handle adding the picnic to reservation
+const handleAddToReservation = () => {
+  const newBooking = {
+    id: picnic.id,
+    name: picnic.title,
+    location: picnic.location,
+    price: parseFloat(picnic.price),
+    nights: 1,
+  };
+
+  addBookingItem(newBooking); // Call the parent function
+	
+    setIsModalOpen(true);
+};
 
   return (
     <div className="container mx-auto p-4">
@@ -52,9 +69,15 @@ const PicnicDetails = () => {
           Duration: {picnic.duration} hours
         </p>
       </div>
-      <button className="mt-6 bg-blue-500 text-white py-2 px-6 rounded-lg hover:bg-blue-600">
-        Book Now
-      </button>
+<button
+  className="mt-6 bg-blue-500 text-white py-2 px-6 rounded"
+  onClick={handleAddToReservation}
+>
+  Add to Reservation
+</button>
+
+{/* Success Modal */}
+      <SuccessModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

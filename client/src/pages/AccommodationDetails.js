@@ -1,36 +1,46 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { X, ChevronLeft, ChevronRight, Minus, Plus, Wifi, Car, Tv, Coffee, BedDouble } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  Star,
+  Wifi,
+  Car,
+  Coffee,
+  Tv,
+  BedDouble, X, Minus, Plus
+} from "lucide-react";
+import { DayPicker } from "react-day-picker";
+import 'react-day-picker/dist/style.css';
+import SuccessModal from "../components/SuccessModal";
 
-const AccommodationDetails = () => {
+const AccommodationDetails = ({ addBookingItem }) => {
   const { id } = useParams();
+
+  // States
   const [accommodation, setAccommodation] = useState(null);
+  const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isbookingformVisible, setIsbookingformVisible] = useState(false); 
- const [bookingDetails, setBookingDetails] = useState({
-  name: "",
-  mobile: "",
-  email: "",
-  checkIn: "",
-  checkOut: "",
-  guests: 1,
-  specialRequests: [],
-});
-  const [errors, setErrors] = useState({});
-  const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [dateRange, setDateRange] = useState({ from: null, to: null });
+  const [isBookingFormVisible, setIsBookingFormVisible] = useState(false);
+  const [guests, setGuests] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch Accommodation Details
   useEffect(() => {
     const fetchAccommodationDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/accommodation/${id}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch accommodation details");
-        }
+        const response = await fetch(`http://192.168.24.100:5000/api/accommodation/${id}`);
+        if (!response.ok) throw new Error("Failed to fetch accommodation details");
         const data = await response.json();
         data.amenities = data.amenities.split(",").map((item) => item.trim());
         setAccommodation(data);
+
+        // Fetch availability data
+        await fetchAvailability(id);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -41,343 +51,238 @@ const AccommodationDetails = () => {
     fetchAccommodationDetails();
   }, [id]);
 
-  // Calendar Generation
-  const generateCalendar = (monthOffset = 0) => {
-    const today = new Date();
-    const currentMonth = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
-    const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
-    const firstDayOfMonth = currentMonth.getDay();
-
-    const days = [];
-    for (let i = 0; i < firstDayOfMonth; i++) days.push(null);
-    for (let i = 1; i <= daysInMonth; i++) days.push(i);
-
-    return {
-      month: currentMonth.toLocaleString("default", { month: "long" }),
-      year: currentMonth.getFullYear(),
-      days,
-    };
+  // Fetch Availability Data
+  const fetchAvailability = async (accommodationId) => {
+    try {
+      const response = await fetch(
+        `http://192.168.24.100:5000/api/availability?accommodation_id=${accommodationId}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch availability");
+      const data = await response.json();
+      setAvailability(data);
+    } catch (err) {
+      console.error("Error fetching availability:", err.message);
+    }
   };
 
-  const calendar = generateCalendar(currentMonthOffset);
+  // Generate Disabled Dates
+  const generateDisabledDates = (availability) =>
+    Array.isArray(availability)
+      ? availability.filter((range) => !range.is_available).map((range) => ({
+          from: new Date(range.start_date),
+          to: new Date(range.end_date),
+        }))
+      : [];
 
-  // Handle Booking Form Submission
 
-const handleBookingSubmit = (e) => {
-  e.preventDefault();
 
-  const newErrors = {};
-  const { name, email, checkIn, checkOut, guests, specialRequests } = bookingDetails;
+  // Handle Slide Navigation
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % (accommodation?.image_urls?.length || 1));
+  };
 
-  // Validate form inputs
-  if (!name.trim()) newErrors.name = "Name is required.";
-  if (!email.trim()) {
-    newErrors.email = "Email is required.";
-  } else if (!/\S+@\S+\.\S+/.test(email)) {
-    newErrors.email = "Invalid email format.";
-  }
-  if (!checkIn) newErrors.checkIn = "Check-in date is required.";
-  if (!checkOut) newErrors.checkOut = "Check-out date is required.";
-  if (checkIn && checkOut && new Date(checkIn) >= new Date(checkOut)) {
-    newErrors.dates = "Check-out date must be after check-in date.";
-  }
-  if (guests < 1) newErrors.guests = "At least 1 guest is required.";
+  const prevSlide = () => {
+    setCurrentSlide(
+      (prev) => (prev - 1 + (accommodation?.image_urls?.length || 1)) % (accommodation?.image_urls?.length || 1)
+    );
+  };
 
-  // Check for errors
-  if (Object.keys(newErrors).length > 0) {
-    setErrors(newErrors);
-    return;
-  }
+  // Toggle Booking Form Visibility
+  const handleBookingFormToggle = () => {
+    setIsBookingFormVisible((prev) => !prev);
+  };
 
-  // Simulate API call for booking
-  console.log("Booking Details Submitted:", { ...bookingDetails, totalCost, nights });
-  alert("Booking successfully submitted!");
+  // Handle Booking Submission
+  const handleBookingSubmit = (e) => {
+    e.preventDefault();
 
-};
+    if (!dateRange.from || !dateRange.to) {
+      alert("Please select a valid date range");
+      return;
+    }
 
-const handleBookingChange = (e) => {
-  const { name, value } = e.target;
-  setBookingDetails((prev) => ({ ...prev, [name]: value }));
-};
+    const nights = Math.ceil((dateRange.to - dateRange.from) / (1000 * 60 * 60 * 24));
+    const totalCost = nights * accommodation.price_per_night;
 
-const handleSpecialRequestsChange = (e) => {
-  const { value, checked } = e.target;
-  setBookingDetails((prev) => ({
-    ...prev,
-    specialRequests: checked
-      ? [...prev.specialRequests, value]
-      : prev.specialRequests.filter((req) => req !== value),
-  }));
-};
+    const bookingDetails = {
+      id: Date.now().toString(),
+      name: accommodation.title,
+      location: accommodation.location,
+      price: accommodation.price_per_night,
+      nights,
+      guests,
+      checkIn: dateRange.from.toISOString().split("T")[0],
+      checkOut: dateRange.to.toISOString().split("T")[0],
+      hostId: accommodation.host_id,
+      amenities: accommodation.amenities,
+    };
 
-const handleGuestChange = (increment) => {
-  setBookingDetails((prev) => ({
-    ...prev,
-    guests: Math.max(1, prev.guests + increment),
-  }));
-};
+    addBookingItem(bookingDetails);
+    setIsModalOpen(true);
+    setIsBookingFormVisible(false);
 
-if (loading) return <div>Loading...</div>;
-if (error) return <div>Error: {error}</div>;
+    // Reset form
+    setDateRange({ from: null, to: null });
+    setGuests(1);
+  };
 
-// Calculate the number of nights and total cost
-const nights =
-  bookingDetails.checkIn && bookingDetails.checkOut
-    ? Math.ceil(
-        (new Date(bookingDetails.checkOut) - new Date(bookingDetails.checkIn)) / (1000 * 60 * 60 * 24)
-      )
-    : 0;
-const totalCost = nights * accommodation.price_per_night;
+  // Handle Guest Count Change
+  const handleGuestChange = (increment) => {
+    setGuests((prev) => Math.max(1, prev + increment));
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  const iconsMapping = {
+    Wifi: <Wifi className="w-6 h-6" />,
+    Car: <Car className="w-6 h-6" />,
+    Tv: <Tv className="w-6 h-6" />,
+    Coffee: <Coffee className="w-6 h-6" />,
+    Bed: <BedDouble className="w-6 h-6" />,
+  };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-gray-50">
-      {/* Accommodation Details */}
-      <section className="mb-4">
-        <div className="relative rounded-2xl overflow-hidden">
-          <img
-            src={`http://localhost:5000/${accommodation.image_urls}`}
-            alt="Accommodation"
-            className="w-full h-[400px] object-cover"
-          />
-        </div>
-      </section>
+    <main className="max-w-7xl mx-auto px-4 py-12">
+      {/* Image Carousel */}
+      <div className="relative h-[36vh] rounded-xl overflow-hidden mb-4">
 
-      <section className="mb-4">
-        <div className="backdrop-blur-sm bg-white/90 p-6 rounded-2xl border border-white/20 shadow-lg">
-          <div className="flex justify-between">
-            <h1 className="text-2xl font-bold">{accommodation.title}</h1>
-            <div className="flex items-center gap-2">
-              <span className="text-yellow-400 text-lg">★ {accommodation.rating || 4.5}</span>
-              
+<img
+  src={`${process.env.PUBLIC_URL}/${accommodation.image_urls.split(',')[0].trim()}`}
+  alt={accommodation.title}
+  className="w-full h-auto object-cover"
+/>
+        <button onClick={prevSlide} className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full">
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+        <button onClick={nextSlide} className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full">
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Accommodation Info */}
+      <div className="bg-white rounded-xl shadow-xs p-4 mb-2">
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="md:col-span-1">
+            <h1 className="text-3xl font-bold">{accommodation?.title}</h1>
+            <div className="flex items-center gap-2 text-gray-600">
+              <MapPin className="w-4 h-4" />
+              <span>{accommodation?.location}</span>
             </div>
           </div>
-          <p className="text-gray-600">{accommodation.location}</p>
-	  
-	  
+          <div className="text-right">
+            <p className="text-lg text-gray-600">From</p>
+            <p className="text-3xl font-bold text-blue-500">Kes {accommodation?.price_per_night}/night</p>
+          </div>
         </div>
-      </section>
+      </div>
 
-
-      {/* About This Place */}
-      <section className="mb-4">
-<div className="backdrop-blur-sm bg-white/90 p-6 rounded-2xl border border-white/20 shadow-lg">
-        <h2 className="text-xl font-semibold">About This Place</h2>
-        <p className="text-gray-400 mt-1">{accommodation.description}</p>
-        <p className="text-gray-600 mt-2">({accommodation.reviews || 128} reviews)</p>
- 
-      {/* Amenities */}
-        <h2 className="text-xl font-semibold mt-2">Amenities</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {accommodation.amenities.map((amenity, index) => {
-            const Icon = {
-              Wifi: Wifi,
-              Car: Car,
-              Tv: Tv,
-              Coffee: Coffee,
-              Bed: BedDouble,
-            }[amenity] || BedDouble;
-            return (
-              <div key={index} className="flex items-center gap-2">
-                <Icon className="w-6 h-6 text-gray-600" />
-                <span>{amenity}</span>
-              </div>
-            );
-          })}
-        </div>
-</div>
-      </section>
-
-
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Calendar */}
-        <div className="lg:col-span-2">
-          <div className="p-8 rounded-2xl border bg-white shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4">Availability</h2>
-            <div className="flex items-center justify-between">
-              <button onClick={() => setCurrentMonthOffset((prev) => prev - 1)}>
-                <ChevronLeft />
-              </button>
-              <h3>{calendar.month} {calendar.year}</h3>
-              <button onClick={() => setCurrentMonthOffset((prev) => prev + 1)}>
-                <ChevronRight />
-              </button>
-            </div>
-            <div className="mt-4 grid grid-cols-7 gap-1">
-              {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                <div key={day} className="text-center">{day}</div>
-              ))}
-              {calendar.days.map((day, index) => (
-                <div key={index} className={`text-center ${day ? "cursor-pointer" : "invisible"}`}>
-                  {day}
+      {/* Main Content */}
+      <div className="grid md:grid-cols-3 gap-8">
+        {/* About and Amenities */}
+        <div className="md:col-span-2">
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h2 className="text-2xl font-bold mb-4">About This Place</h2>
+            <p className="text-gray-600 mb-6">{accommodation?.description}</p>
+            <h3 className="text-xl font-semibold mb-4">Amenities</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {accommodation?.amenities?.map((amenity, index) => (
+                <div key={index} className="flex items-center gap-2 p-3 rounded-lg bg-gray-50">
+                  {iconsMapping[amenity] || <BedDouble className="w-6 h-6" />}
+                  <span>{amenity}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
-</section>
 
-<div>
-<button
-  className="w-full bg-blue-600 text-white py-4 px-8 rounded-lg hover:bg-blue-700 transition-all mt-4 mb-2"
-  onClick={() => setIsbookingformVisible(true)}
->
-  Reserve
-</button>
-</div>
-
-
-{/* Booking Form Section */}
-{isbookingformVisible && (
-   <section className="mb-8 mt-4">
-<div className="backdrop-blur-sm bg-white/70 p-8 rounded-2xl border border-white/20 shadow-lg">
-       <div className="flex justify-between items-center px-4 py-2 border-b mb-2">
-  <h2 className="text-2xl font-semibold text-gray-800">Reservation Details</h2>
-  <button
-              onClick={() => setIsbookingformVisible(false)}
-              className="text-gray-500 hover:text-gray-800"
+        {/* Calendar and Booking */}
+        <div className="md:col-span-1">
+          <div className="bg-white rounded-xl shadow p-8 sticky top-8">
+            <DayPicker
+              mode="range"
+              selected={dateRange}
+              onSelect={setDateRange}
+              disabled={generateDisabledDates(availability)}
+            />
+            <button
+              onClick={handleBookingFormToggle}
+              className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors mt-6"
             >
-              <X className="w-6 h-6" />
+              Reserve
             </button>
-</div>
-  <form onSubmit={handleBookingSubmit} className="space-y-6">
-    {/* Name */}
-    <div>
-      <label className="block text-sm font-medium text-gray-600 mb-2">Name</label>
-      <input
-        type="text"
-        name="name"
-        value={bookingDetails.name}
-        onChange={handleBookingChange}
-        className="w-full bg-white/50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all hover:bg-white/60"
-        required
-      />
-    </div>
+          </div>
+        </div>
+      </div>
 
-    {/* Mobile Number */}
-    <div>
-      <label className="block text-sm font-medium text-gray-600 mb-2">Mobile Number</label>
-      <input
-        type="tel"
-        name="mobile"
-        value={bookingDetails.mobile}
-        onChange={handleBookingChange}
-        className="w-full bg-white/50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all hover:bg-white/60"
-        required
-      />
-    </div>
-
-    {/* Email */}
-    <div>
-      <label className="block text-sm font-medium text-gray-600 mb-2">Email</label>
-      <input
-        type="email"
-        name="email"
-        value={bookingDetails.email}
-        onChange={handleBookingChange}
-        className="w-full bg-white/50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all hover:bg-white/60"
-        required
-      />
-    </div>
-
-    {/* Check-in */}
-    <div>
-      <label className="block text-sm font-medium text-gray-600 mb-2">Check-In</label>
-      <input
-        type="date"
-        name="checkIn"
-        value={bookingDetails.checkIn}
-        onChange={handleBookingChange}
-        className="w-full bg-white/50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all hover:bg-white/60"
-        required
-      />
-    </div>
-
-    {/* Check-out */}
-    <div>
-      <label className="block text-sm font-medium text-gray-600 mb-2">Check-Out</label>
-      <input
-        type="date"
-        name="checkOut"
-        value={bookingDetails.checkOut}
-        onChange={handleBookingChange}
-        className="w-full bg-white/50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all hover:bg-white/60"
-        required
-      />
-    </div>
-
-    {/* Number of Guests */}
-    <div>
-      <label className="block text-sm font-medium text-gray-600 mb-2">Number of Guests</label>
-      <div className="flex items-center bg-white/50 border border-gray-300 rounded-lg overflow-hidden">
-        <button
-          type="button"
-          onClick={() => handleGuestChange(-1)}
-          disabled={bookingDetails.guests <= 1}
-          className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          -
-        </button>
-        <span className="flex-1 text-center text-gray-800 font-medium">{bookingDetails.guests}</span>
-        <button
-          type="button"
-          onClick={() => handleGuestChange(1)}
-          className="px-3 py-2 hover:bg-gray-100 transition-colors"
-        >
-          +
+{isBookingFormVisible && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+    <div className="bg-white rounded-xl p-8 max-w-md w-full">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-2xl font-bold">Complete Your Booking</h3>
+        <button onClick={() => setIsBookingFormVisible(false)}>
+          <X className="w-6 h-6" />
         </button>
       </div>
-    </div>
-{/* Special Requests */}
-<div>
-  <label className="block text-sm font-medium text-gray-600 mb-2">
-    Special Requests
-  </label>
-  <div className="space-y-4">
-    {/* Early Check-In */}
-    <label className="flex items-center justify-between">
-      <span className="text-gray-600">Early Check-In</span>
-      <div className="relative inline-flex items-center cursor-pointer">
-        <input
-          type="checkbox"
-          name="specialRequests"
-          value="Early Check-In"
-          checked={bookingDetails.specialRequests.includes("Early Check-In")}
-          onChange={handleSpecialRequestsChange}
-          className="sr-only peer"
-        />
-        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-      </div>
-    </label>
 
-    {/* Extended Check-Out */}
-    <label className="flex items-center justify-between">
-      <span className="text-gray-600">Extended Check-Out</span>
-      <div className="relative inline-flex items-center cursor-pointer">
-        <input
-          type="checkbox"
-          name="specialRequests"
-          value="Extended Check-Out"
-          checked={bookingDetails.specialRequests.includes("Extended Check-Out")}
-          onChange={handleSpecialRequestsChange}
-          className="sr-only peer"
-        />
-        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+      {/* Number of Guests */}
+      <div className="mb-8">
+        <label className="block mb-4 font-medium">Number of Guests</label>
+        <div className="flex items-center justify-between gap-6">
+          <button
+            onClick={() => handleGuestChange(-1)}
+            className="p-4 rounded-xl border hover:bg-gray-50 transition-colors"
+          >
+            <Minus className="w-6 h-6" />
+          </button>
+          <span className="text-2xl font-medium transition-all duration-200">{guests}</span>
+          <button
+            onClick={() => handleGuestChange(1)}
+            className="p-4 rounded-xl border hover:bg-gray-50 transition-colors"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+        </div>
       </div>
-    </label>
+
+      {/* Special Requests */}
+      <div className="space-y-6 mb-8">
+        <label className="flex items-center justify-between cursor-pointer">
+          <span>Early check-in if available</span>
+          <div className="relative">
+            <input type="checkbox" className="sr-only peer" />
+            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 peer-hover:bg-gray-300 transition-colors"></div>
+            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-full"></div>
+          </div>
+        </label>
+        <label className="flex items-center justify-between cursor-pointer">
+          <span>Late check-out if available</span>
+          <div className="relative">
+            <input type="checkbox" className="sr-only peer" />
+            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 peer-hover:bg-gray-300 transition-colors"></div>
+            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-full"></div>
+          </div>
+        </label>
+      </div>
+
+      {/* Submit Button */}
+      <button
+        onClick={handleBookingSubmit}
+        className="w-full bg-blue-600 text-white py-4 rounded-xl hover:bg-blue-700 transition-colors"
+      >
+        Confirm Booking
+      </button>
+
+
+    </div>
   </div>
-</div>
-
-    {/* Submit Button */}
-    <button
-      type="submit"
-      
-      className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 transition-all"
-    >
-      Submit Booking
-    </button>
-  </form>
-</div>
-</section>
+)}
+{isModalOpen && (
+  <SuccessModal
+    isOpen={isModalOpen}
+    onClose={() => setIsModalOpen(false)}
+  />
 )}
     </main>
   );

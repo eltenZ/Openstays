@@ -74,19 +74,31 @@ app.get('/api/accommodation/:id', async (req, res) => {
 // Check availability
 app.get('/api/availability', async (req, res) => {
   const { accommodation_id, start_date, end_date } = req.query;
+
+  // Validate accommodation_id
+  if (!accommodation_id) {
+    return res.status(400).json({ error: 'Accommodation ID is required' });
+  }
+
   try {
-    const { rows } = await pool.query(
-      `SELECT * FROM availability
-       WHERE accommodation_id = $1
-         AND start_date <= $2
-         AND end_date >= $3
-         AND is_available = true`,
-      [accommodation_id, start_date, end_date]
-    );
-    res.json(rows.length > 0 ? { available: true } : { available: false });
+    let query = `SELECT start_date, end_date, is_available
+                 FROM availability
+                 WHERE accommodation_id = $1`;
+    const params = [accommodation_id];
+
+    // Add date filtering if dates are provided
+    if (start_date && end_date) {
+      query += ` AND NOT (start_date > $3 OR end_date < $2)`;
+      params.push(start_date, end_date);
+    }
+
+    const { rows } = await pool.query(query, params);
+
+    // Return detailed availability data
+    res.json(rows);
   } catch (err) {
-    console.error('Error checking availability:', err.message);
-    res.status(500).json({ error: 'Failed to check availability' });
+    console.error('Error fetching availability:', err.message);
+    res.status(500).json({ error: 'Failed to fetch availability' });
   }
 });
 
@@ -245,6 +257,192 @@ app.delete('/api/picnics/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// API to create reservations
+
+app.post('/api/reservations', async (req, res) => {
+  const { customerInfo, bookingItems, totalAmount, invoiceId } = req.body;
+
+  const client = await pool.connect(); // Get a database client for the transaction
+  try {
+    await client.query('BEGIN'); // Start transaction
+
+    // Step 1: Insert or find the user
+    const userQuery = `
+      INSERT INTO users (name, phone, email)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, phone = EXCLUDED.phone
+      RETURNING id;
+    `;
+    const userValues = [customerInfo.name, customerInfo.phone, customerInfo.email];
+    const userResult = await client.query(userQuery, userValues);
+    const userId = userResult.rows[0].id;
+
+    // Step 2: Create the reservation record
+    const reservationQuery = `
+      INSERT INTO reservations (user_id, unique_invoice_id, status, total_cost)
+      VALUES ($1, $2, 'Pending', $3)
+      RETURNING id;
+    `;
+    const reservationValues = [userId, invoiceId, totalAmount];
+    const reservationResult = await client.query(reservationQuery, reservationValues);
+    const reservationId = reservationResult.rows[0].id;
+
+    // Step 3: Insert reservation items
+    const itemQueries = bookingItems.map((item) => {
+      return client.query(
+        `
+        INSERT INTO reservation_items (reservation_id, description, cost, quantity)
+        VALUES ($1, $2, $3, $4)
+        `,
+        [reservationId, item.name, item.price, item.nights || 1]
+      );
+    });
+    await Promise.all(itemQueries); // Execute all item inserts in parallel
+
+    await client.query('COMMIT'); // Commit the transaction
+    res.status(201).json({ message: 'Reservation created successfully', reservationId });
+  } catch (error) {
+    await client.query('ROLLBACK'); // Rollback the transaction on error
+    console.error('Error creating reservation:', error.message);
+    res.status(500).json({ error: 'Failed to create reservation' });
+  } finally {
+    client.release(); // Release the client back to the pool
+  }
+});
+
+// API to fetch reservations at AdminPanel
+
+app.get('/api/reservations', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        r.id AS reservation_id,
+        r.unique_invoice_id,
+        r.status,
+        r.total_cost,
+        r.amount_paid,
+        r.created_at AS booking_date,
+        u.name AS customer_name,
+        u.email AS customer_email,
+        u.phone AS customer_phone,
+        JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'description', ri.description,
+            'location', COALESCE(a.location, t.location, p.location, 'Unknown'),
+            'cost', ri.cost,
+            'quantity', ri.quantity
+          )
+        ) AS reservation_items
+      FROM reservations r
+      JOIN users u ON r.user_id = u.id
+      LEFT JOIN reservation_items ri ON r.id = ri.reservation_id
+      LEFT JOIN accommodations a ON a.title = ri.description
+      LEFT JOIN trips t ON t.title = ri.description
+      LEFT JOIN picnics p ON p.title = ri.description
+      GROUP BY r.id, u.id
+    `;
+    const { rows } = await pool.query(query);
+
+    // Transform response for frontend expectations
+    const transformedData = rows.map(row => ({
+      id: row.reservation_id,
+      guest: row.customer_name,
+      email: row.customer_email,
+      phone: row.customer_phone,
+      invoiceNumber: row.unique_invoice_id,
+      status: row.status,
+      bookingDate: row.booking_date,
+      items: row.reservation_items,
+      total: `Kes ${parseFloat(row.total_cost).toLocaleString()}`,
+      amountPaid: `Kes ${parseFloat(row.amount_paid).toLocaleString()}`,
+    }));
+
+    res.json(transformedData);
+  } catch (error) {
+    console.error('Error fetching reservations:', error.message);
+    res.status(500).json({ error: 'Failed to fetch reservations' });
+  }
+});
+
+//API to get listings for adminpanel
+
+app.get('/api/listings', async (req, res) => {
+  try {
+    const accommodationsQuery = `
+      SELECT 
+        id, title, image_urls, location, price_per_night AS price, status 
+      FROM accommodations
+    `;
+    const tripsQuery = `
+      SELECT 
+        id, title, image, location, price, status 
+      FROM trips
+    `;
+    const picnicsQuery = `
+      SELECT 
+        id, title, image, location, price, status 
+      FROM picnics
+    `;
+
+    const [accommodations, trips, picnics] = await Promise.all([
+      pool.query(accommodationsQuery),
+      pool.query(tripsQuery),
+      pool.query(picnicsQuery),
+    ]);
+
+    const listings = [
+      ...accommodations.rows.map(accommodation => ({
+        id: accommodation.id,
+        title: accommodation.title,
+        location: accommodation.location,
+        price: `$${parseFloat(accommodation.price).toFixed(2)}/night`,
+        status: accommodation.status,
+        category: 'Stays',
+	image: accommodation.image_urls,
+      })),
+      ...trips.rows.map(trip => ({
+        id: trip.id,
+        title: trip.title,
+        location: trip.location,
+        price: `$${parseFloat(trip.price).toFixed(2)}`,
+        status: trip.status,
+        category: 'Trips',
+	image: trip.image,
+      })),
+      ...picnics.rows.map(picnic => ({
+        id: picnic.id,
+        title: picnic.title,
+        location: picnic.location,
+        price: `$${parseFloat(picnic.price).toFixed(2)}`,
+        status: picnic.status,
+        category: 'Picnics',
+	image: picnic.image,
+      })),
+    ];
+
+    res.json(listings);
+  } catch (error) {
+    console.error('Error fetching listings:', error.message);
+    res.status(500).json({ error: 'Failed to fetch listings' });
+  }
+});
+
+// Api to update reservation status
+
+app.put('/api/reservations/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    const query = `UPDATE reservations SET status = $1 WHERE id = $2 RETURNING *`;
+    const { rows } = await pool.query(query, [status, id]);
+    if (!rows.length) return res.status(404).json({ error: 'Reservation not found' });
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error updating reservation status:', error.message);
+    res.status(500).json({ error: 'Failed to update reservation status' });
   }
 });
 

@@ -7,8 +7,9 @@ import {
 import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-
-export default function ServicesPage() {
+import SuccessModal from "../components/SuccessModal"; // Import the SuccessModal
+export default function ServicesPage({ addBookingItem }) {
+const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedDays, setSelectedDays] = useState(1);
   const [chefOption, setChefOption] = useState(null);
@@ -29,6 +30,20 @@ export default function ServicesPage() {
   const removeService = (id) => {
     setSelectedServices(selectedServices.filter((service) => service.id !== id));
   };
+
+const handleAddToReservation = () => {
+  selectedServices.forEach((service) => {
+    const newBooking = {
+      id: service.id,
+      name: service.type,
+      details: service.details,
+      price: service.price,
+    };
+    addBookingItem(newBooking); // Call parent function
+	 // Open success modal
+    setIsModalOpen(true);
+  })
+};
 
   return (
     <main className="min-h-screen bg-gray-50 p-4 md:p-8">
@@ -253,11 +268,17 @@ export default function ServicesPage() {
 
         {/* Add to Reservation Button */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t">
-          <button className="w-full bg-[#1a365d] text-white py-3 rounded-lg font-medium hover:bg-[#2a466d] transition">
-            Add Services to Reservation
-          </button>
+<button
+  className="w-full bg-[#1a365d] text-white py-3 rounded-lg font-medium hover:bg-[#2a4365]"
+  onClick={handleAddToReservation}
+>
+  Add Services to Reservation
+</button>
         </div>
       </div>
+
+{/* Success Modal */}
+      <SuccessModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </main>
   );
 }

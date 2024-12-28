@@ -1,13 +1,8 @@
 import React from "react";
 import { Trash2 } from "lucide-react";
 
-const Bookings = ({ items, removeItem }) => {
+const Bookings = ({ items, removeItem, openPaymentModal }) => {
   const totalCost = items.reduce((sum, item) => sum + item.price * (item.nights || 1), 0);
-
-  const handleProceedToPay = () => {
-    alert("Proceeding to payment...");
-    // Add your payment navigation or logic here
-  };
 
   return (
     <div className="p-4 bg-gray-50 min-h-screen flex flex-col justify-between">
@@ -25,9 +20,9 @@ const Bookings = ({ items, removeItem }) => {
                   <div>
                     <h3 className="font-medium">{item.name}</h3>
                     <p className="text-sm text-gray-600">
-                      Kes {item.price.toLocaleString()} / night
+                      Kes {item.price.toLocaleString()}
                     </p>
-                    {item.nights && <p className="text-sm text-gray-600">{item.nights} nights</p>}
+                    {item.nights && <p className="text-sm text-gray-600">{item.nights} Qty/nights</p>}
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="font-medium">
@@ -51,7 +46,7 @@ const Bookings = ({ items, removeItem }) => {
           </div>
 
           <button
-            onClick={handleProceedToPay}
+            onClick={openPaymentModal} // Trigger the payment modal
             className="mt-4 w-full py-3 bg-[#1a365d] text-white font-semibold rounded-lg hover:bg-[#163059] transition"
           >
             Proceed to Pay

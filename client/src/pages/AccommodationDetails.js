@@ -33,7 +33,7 @@ const AccommodationDetails = ({ addBookingItem }) => {
   useEffect(() => {
     const fetchAccommodationDetails = async () => {
       try {
-        const response = await fetch(`http://192.168.24.100:5000/api/accommodation/${id}`);
+        const response = await fetch(`http://192.168.183.29:5000/api/accommodation/${id}`);
         if (!response.ok) throw new Error("Failed to fetch accommodation details");
         const data = await response.json();
         data.amenities = data.amenities.split(",").map((item) => item.trim());
@@ -54,9 +54,7 @@ const AccommodationDetails = ({ addBookingItem }) => {
   // Fetch Availability Data
   const fetchAvailability = async (accommodationId) => {
     try {
-      const response = await fetch(
-        `http://192.168.24.100:5000/api/availability?accommodation_id=${accommodationId}`
-      );
+      const response = await fetch(`http://192.168.183.29:5000/api/availability?accommodation_id=${accommodationId}`);
       if (!response.ok) throw new Error("Failed to fetch availability");
       const data = await response.json();
       setAvailability(data);

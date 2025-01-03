@@ -2,23 +2,24 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Filter, Search, Star } from "lucide-react";
 import AccommodationFilters from "../components/AccommodationFilters";
+import AccommodationCarousel from "../components/carousel.js";
 
 const Home = () => {
   const [accommodations, setAccommodations] = useState([]);
-  const [filteredAccommodations, setFilteredAccommodations] = useState([]);
+  
   const [availableAmenities, setAvailableAmenities] = useState([]);
-    const [searchInput, setSearchInput] = useState(""); // State for search input
+  const [searchInput, setSearchInput] = useState(""); // State for search input
   const [searchSuggestions, setSearchSuggestions] = useState([]); // State for search suggestions
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
  
-
+// Api fetch accommodations
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://192.168.24.100:5000/api/accommodations");
+        const response = await fetch(`http://192.168.183.29:5000/api/accommodations`);
         if (!response.ok) {
           throw new Error("Failed to fetch accommodations.");
         }
@@ -35,7 +36,7 @@ const Home = () => {
         }));
 
         setAccommodations(normalizedData);
-        setFilteredAccommodations(normalizedData);
+       
 
         // Extract unique amenities
         const amenitiesSet = new Set();
@@ -51,52 +52,36 @@ const Home = () => {
     fetchData();
   }, []);
 
-const fetchSearchSuggestions = async (query) => {
-    if (!query) {
-      setSearchSuggestions([]);
-      return;
-    }
 
-    try {
-      // Filter available titles and locations that match the query
-      const suggestions = accommodations.filter(
-        (acc) =>
-          acc.title.includes(query.toLowerCase()) ||
-          acc.location.includes(query.toLowerCase())
-      )
-	.flatMap((acc) => [acc.title, acc.location]);
+// Generate search suggestions based on input
+const generateSuggestions = (input) => {
+  if (!input) {
+    setSearchSuggestions([]); // Clear suggestions if input is empty
+    return;
+  }
 
-      // Deduplicate and prepare the suggestions list
-      const uniqueSuggestions = Array.from(
-        new Set(suggestions));
+  const suggestions = accommodations
+    .filter((accommodation) =>
+      (accommodation.title || "").toLowerCase().includes(input.toLowerCase()) ||
+      (accommodation.location || "").toLowerCase().includes(input.toLowerCase())
+    )
+    .flatMap((accommodation) => [accommodation.title, accommodation.location]); // Extract title and location
 
-      setSearchSuggestions(uniqueSuggestions);
-    } catch (error) {
-      console.error("Error fetching search suggestions:", error.message);
-    }
-  };
+  // Remove duplicates and limit suggestions to 5
+  const uniqueSuggestions = Array.from(new Set(suggestions)).slice(0, 5);
+  setSearchSuggestions(uniqueSuggestions);
+};
 
-  const handleSearchChange = (input) => {
-    setSearchInput(input);
-    fetchSearchSuggestions(input); // Fetch suggestions as the user types
-  };
+const handleSearchChange = (input) => {
+  setSearchInput(input); // Update search input state
+  generateSuggestions(input); // Generate suggestions based on input
+};
 
-  const handleSearchSelect = (selectedOption) => {
-    setSearchInput(selectedOption);
-    setSearchSuggestions([]);
-    const searchedData = accommodations.filter(
-      (acc) =>
-        acc.title.includes(selectedOption.toLowerCase()) ||
-        acc.location.includes(selectedOption.toLowerCase())
-    );
-    setFilteredAccommodations(searchedData);
-  };
+// api for fetch availability
 
   const fetchAvailability = async (id, startDate, endDate) => {
     try {
-      const response = await fetch(
-        `http://192.168.24.100:5000/api/availability?accommodation_id=${id}&start_date=${startDate}&end_date=${endDate}`
-      );
+      const response = await fetch(`http://192.168.183.29:5000/api/availability?accommodation_id=${id}&start_date=${startDate}&end_date=${endDate}`);
       if (!response.ok) {
         throw new Error("Failed to check availability.");
       }
@@ -108,66 +93,57 @@ const fetchSearchSuggestions = async (query) => {
     }
   };
 
- 
+// Logic for filters
+const [filterCriteria, setFilterCriteria] = useState({
+  priceRange: [0, Infinity], // [min, max]
+  location: "",
+  amenities: [], // Array of selected amenities
+  bedrooms: null,
+  maxGuests: null,
+}); 
 
-  const applyFilters = async (filters) => {
-    let filteredData = accommodations.filter((accommodation) => {
-      // Filter by destination
-      if (
-        filters.destination &&
-        !accommodation.location.includes(filters.destination.toLowerCase())
-      ) {
-        return false;
-      }
+ const filteredAccommodations = accommodations.filter((accommodation) => {
+  const matchesSearch =
+    (accommodation.title || "").toLowerCase().includes(searchInput.toLowerCase()) ||
+    (accommodation.location || "").toLowerCase().includes(searchInput.toLowerCase());
 
-      // Filter by price range
-      const [minPrice, maxPrice] = filters.priceRange || [0, Infinity];
-      if (
-        accommodation.price_per_night < minPrice ||
-        accommodation.price_per_night > maxPrice
-      ) {
-        return false;
-      }
+  const matchesPrice =
+    accommodation.price_per_night >= filterCriteria.priceRange[0] &&
+    accommodation.price_per_night <= filterCriteria.priceRange[1];
 
-      // Filter by rooms
-      if (filters.rooms && filters.rooms > accommodation.bedrooms) {
-        return false;
-      }
+  const matchesLocation = filterCriteria.location
+    ? accommodation.location.toLowerCase().includes(filterCriteria.location.toLowerCase())
+    : true;
 
-      // Filter by guests
-      if (filters.guests && filters.guests > accommodation.max_guests) {
-        return false;
-      }
+  const matchesAmenities = filterCriteria.amenities.length
+    ? filterCriteria.amenities.every((amenity) => accommodation.amenities.includes(amenity.toLowerCase()))
+    : true;
 
-      // Filter by amenities
-      if (filters.amenities) {
-        for (const [amenity, selected] of Object.entries(filters.amenities)) {
-          if (selected && !accommodation.amenities.includes(amenity.toLowerCase())) {
-            return false;
-          }
-        }
-      }
+  const matchesBedrooms = filterCriteria.bedrooms
+    ? accommodation.bedrooms >= filterCriteria.bedrooms
+    : true;
 
-      return true; // Pass all non-availability filters
-    });
+  const matchesMaxGuests = filterCriteria.maxGuests
+    ? accommodation.max_guests >= filterCriteria.maxGuests
+    : true;
 
-    // Check availability if dates are specified
-if (filters.dates && filters.dates.length === 2) {
-  const [startDate, endDate] = filters.dates;
+  return (
+    matchesSearch &&
+    matchesPrice &&
+    matchesLocation &&
+    matchesAmenities &&
+    matchesBedrooms &&
+    matchesMaxGuests
+  );
+});
 
-  if (startDate && endDate) { // Ensure dates are valid
-    const availabilityChecks = await Promise.all(
-      filteredData.map((acc) =>
-        fetchAvailability(acc.id, startDate.toISOString(), endDate.toISOString())
-      )
-    );
+const updateFilterCriteria = (field, value) => {
+  setFilterCriteria((prevCriteria) => ({
+    ...prevCriteria,
+    [field]: value,
+  }));
+};
 
-    // Filter accommodations based on availability
-    filteredData = filteredData.filter((_, index) => availabilityChecks[index]);
-  }
-}
-    setFilteredAccommodations(filteredData);
-  };
 
   if (loading) return <div className="loading">Loading...</div>;
   if (error) return <div className="error">{error}</div>;
@@ -191,7 +167,10 @@ if (filters.dates && filters.dates.length === 2) {
                 {searchSuggestions.map((suggestion, index) => (
                   <div
                     key={index}
-                    onClick={() => handleSearchSelect(suggestion)}
+                    onClick={() => {
+          setSearchInput(suggestion); // Set input to selected suggestion
+          setSearchSuggestions([]); // Clear suggestions
+}}
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   >
                     {suggestion}
@@ -211,69 +190,62 @@ if (filters.dates && filters.dates.length === 2) {
         </div>
 
         {showFilters && (
-          <AccommodationFilters
-            applyFilters={applyFilters}
-            availableAmenities={availableAmenities}
-            closeFilters={() => setShowFilters(false)}
-          />
-        )}
+<AccommodationFilters
+  filterCriteria={filterCriteria}
+  updateFilterCriteria={updateFilterCriteria}
+  availableAmenities={availableAmenities}
+  closeFilters={() => setShowFilters(false)} // For closing the filter component
+/>
+)}
       </div>
 
-      <section className="mb-8 container mx-auto px-6 max-w-7xl">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAccommodations.map((accommodation) => (
-            <div
-              key={accommodation.id}
-              className="rounded-xl overflow-hidden shadow-md hover:shadow-lg bg-white transition-all duration-300 hover:-translate-y-1"
-            >
-              <div className="relative h-56">
-                <div className="absolute top-4 left-4 bg-white/70 backdrop-blur-md px-3 py-1 rounded-full shadow-md">
-                  <span className="text-sm text-gray-800">Verified</span>
-                </div>
-                
-		 <img
-  src={`${process.env.PUBLIC_URL}/${accommodation.image_urls.split(',')[0].trim()}`}
-  alt={accommodation.title}
-  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-/>
-	
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold">{accommodation.title}</h3>
-                <p className="text-sm text-gray-600 my-2">
-                  {accommodation.description.slice(0, 75)}...
-                </p>
-                <div className="flex items-center gap-1 mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={16}
-                      className={`${
-                        i < accommodation.rating ? "text-yellow-400" : "text-gray-300"
-                      }`}
-                    />
-                  ))}
-                  <span className="text-sm text-gray-600">
-                    {accommodation.rating || 0} ({accommodation.reviews_count || 0} reviews)
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold">
-                    Kes {accommodation.price_per_night}
-                    <span className="text-sm text-gray-500">/night</span>
-                  </span>
-                  <Link
-                    to={`/accommodation/${accommodation.id}`}
-                    className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors duration-300"
-                  >
-                    Book now
-                  </Link>
-                </div>
-              </div>
+<section className="mb-8 container mx-auto px-6 max-w-7xl">
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {filteredAccommodations.map((accommodation) => (
+      <Link
+        to={`/accommodation/${accommodation.id}`}
+        key={accommodation.id}
+        className="rounded-xl overflow-hidden shadow-md hover:shadow-lg bg-white transition-all duration-300 hover:-translate-y-1"
+      >
+        <div>
+          <AccommodationCarousel accommodation={accommodation} />
+          <div className="p-4">
+            <h3 className="font-semibold">{accommodation.title}</h3>
+            <p className="text-sm text-gray-600 my-2">
+              {accommodation.description.slice(0, 75)}...
+            </p>
+            <div className="flex items-center gap-1 mb-2">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  size={16}
+                  className={`${
+                    i < accommodation.rating ? "text-yellow-400" : "text-gray-300"
+                  }`}
+                />
+              ))}
+              <span className="text-sm text-gray-600">
+                {accommodation.rating || 0} ({accommodation.reviews_count || 0} reviews)
+              </span>
             </div>
-          ))}
+            <div className="flex items-center justify-between">
+              <span className="font-bold">
+                Kes {accommodation.price_per_night}
+                <span className="text-sm text-gray-500">/night</span>
+              </span>
+              <button
+                className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors duration-300"
+                aria-label={`Book ${accommodation.title}`}
+              >
+                Book now
+              </button>
+            </div>
+          </div>
         </div>
-      </section>
+      </Link>
+    ))}
+  </div>
+</section>
     </main>
   );
 };

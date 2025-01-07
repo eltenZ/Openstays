@@ -10,10 +10,10 @@ const port = process.env.PORT || 5000;
 
 // PostgreSQL Database connection
 const pool = new Pool({
-  user: 'u0_a367', // Correct database user
+  user: 'postgres', // Correct database user
   host: process.env.DB_HOST || 'localhost',
   database: process.env.DB_NAME || 'openstays',
-  password: process.env.DB_PASSWORD || null, // Add the correct password here if applicable
+  password: process.env.DB_PASSWORD || 'watuma', // Add the correct password here if applicable
   port: process.env.DB_PORT || 5432,
 });
 

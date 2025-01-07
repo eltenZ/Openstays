@@ -8,8 +8,8 @@ const AccommodationCarousel = ({ accommodation }) => {
     : ["/default-image.jpg"];
 
   return (
-    <div className="relative h-56">
-      <div className="absolute top-4 left-4 bg-white/70 backdrop-blur-md px-3 py-1 rounded-full shadow-md">
+    <div className="relative h-full">
+      <div className="absolute top-4 left-4 bg-white/70 backdrop-blur-md px-3 py-1 rounded-full shadow-md z-10">
         <span className="text-sm text-gray-800">Verified</span>
       </div>
       <Swiper

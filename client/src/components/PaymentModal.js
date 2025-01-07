@@ -55,7 +55,7 @@ const sendReservation = async () => {
   };
 
   try {
-    const response = await fetch("http://localhost:5000/api/reservations", {
+    const response = await fetch("http://192.168.235.93:5000/api/reservations", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

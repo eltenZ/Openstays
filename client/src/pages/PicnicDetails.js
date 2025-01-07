@@ -12,7 +12,7 @@ const [isModalOpen, setIsModalOpen] = useState(false);
   useEffect(() => {
     const fetchPicnicDetails = async () => {
       try {
-        const response = await fetch(`http://192.168.183.29:5000/api/picnics/${id}`);
+        const response = await fetch(`http://192.168.235.93:5000/api/picnics/${id}`);
         if (!response.ok) {
           throw new Error("Failed to fetch picnic details.");
         }

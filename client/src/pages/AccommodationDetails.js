@@ -14,6 +14,7 @@ import {
 import { DayPicker } from "react-day-picker";
 import 'react-day-picker/dist/style.css';
 import SuccessModal from "../components/SuccessModal";
+import AccommodationCarousel from "../components/carousel";
 
 const AccommodationDetails = ({ addBookingItem }) => {
   const { id } = useParams();
@@ -23,7 +24,6 @@ const AccommodationDetails = ({ addBookingItem }) => {
   const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [isBookingFormVisible, setIsBookingFormVisible] = useState(false);
   const [guests, setGuests] = useState(1);
@@ -33,7 +33,7 @@ const AccommodationDetails = ({ addBookingItem }) => {
   useEffect(() => {
     const fetchAccommodationDetails = async () => {
       try {
-        const response = await fetch(`http://192.168.183.29:5000/api/accommodation/${id}`);
+        const response = await fetch(`http://192.168.235.93:5000/api/accommodation/${id}`);
         if (!response.ok) throw new Error("Failed to fetch accommodation details");
         const data = await response.json();
         data.amenities = data.amenities.split(",").map((item) => item.trim());
@@ -54,7 +54,7 @@ const AccommodationDetails = ({ addBookingItem }) => {
   // Fetch Availability Data
   const fetchAvailability = async (accommodationId) => {
     try {
-      const response = await fetch(`http://192.168.183.29:5000/api/availability?accommodation_id=${accommodationId}`);
+      const response = await fetch(`http://192.168.235.93:5000/api/availability?accommodation_id=${accommodationId}`);
       if (!response.ok) throw new Error("Failed to fetch availability");
       const data = await response.json();
       setAvailability(data);
@@ -73,17 +73,6 @@ const AccommodationDetails = ({ addBookingItem }) => {
       : [];
 
 
-
-  // Handle Slide Navigation
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % (accommodation?.image_urls?.length || 1));
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide(
-      (prev) => (prev - 1 + (accommodation?.image_urls?.length || 1)) % (accommodation?.image_urls?.length || 1)
-    );
-  };
 
   // Toggle Booking Form Visibility
   const handleBookingFormToggle = () => {
@@ -141,26 +130,15 @@ const AccommodationDetails = ({ addBookingItem }) => {
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-12">
+    <main className="max-w-7xl mx-auto w-full md:w-1/2 md:mx-4 px-4 py-2">
       {/* Image Carousel */}
-      <div className="relative h-[36vh] rounded-xl overflow-hidden mb-4">
-
-<img
-  src={`${process.env.PUBLIC_URL}/${accommodation.image_urls.split(',')[0].trim()}`}
-  alt={accommodation.title}
-  className="w-full h-auto object-cover"
-/>
-        <button onClick={prevSlide} className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full">
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <button onClick={nextSlide} className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full">
-          <ChevronRight className="w-6 h-6" />
-        </button>
+      <div className="relative h-96 md:h-128 w-full rounded-xl mb-2">
+      <AccommodationCarousel accommodation={accommodation} />
       </div>
 
       {/* Accommodation Info */}
-      <div className="bg-white rounded-xl shadow-xs p-4 mb-2">
-        <div className="grid md:grid-cols-3 gap-4">
+      <div className="bg-white rounded-xl shadow-xs p-4 w-full md:w-[150vh]">
+        <div className="grid md:grid-cols-3 gap-2">
           <div className="md:col-span-1">
             <h1 className="text-3xl font-bold">{accommodation?.title}</h1>
             <div className="flex items-center gap-2 text-gray-600">
@@ -195,8 +173,8 @@ const AccommodationDetails = ({ addBookingItem }) => {
         </div>
 
         {/* Calendar and Booking */}
-        <div className="md:col-span-1">
-          <div className="bg-white rounded-xl shadow p-8 sticky top-8">
+        <div className="relative md:absolute md:mt-2 md:top-16 md:right-16 md:col-span-1 w-full md:w-1/3 items-center">
+          <div className="bg-white rounded-xl shadow p-4 sticky top-8 w-full">
             <DayPicker
               mode="range"
               selected={dateRange}
@@ -250,7 +228,7 @@ const AccommodationDetails = ({ addBookingItem }) => {
           <span>Early check-in if available</span>
           <div className="relative">
             <input type="checkbox" className="sr-only peer" />
-            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 peer-hover:bg-gray-300 transition-colors"></div>
+            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-500 peer-hover:bg-gray-300 transition-colors"></div>
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-full"></div>
           </div>
         </label>
@@ -258,7 +236,7 @@ const AccommodationDetails = ({ addBookingItem }) => {
           <span>Late check-out if available</span>
           <div className="relative">
             <input type="checkbox" className="sr-only peer" />
-            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 peer-hover:bg-gray-300 transition-colors"></div>
+            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-500 peer-hover:bg-gray-300 transition-colors"></div>
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-full"></div>
           </div>
         </label>

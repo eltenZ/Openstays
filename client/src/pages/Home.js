@@ -13,13 +13,20 @@ const Home = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [availability, setAvailability] = useState([]);
+  const [cities, setCities] = useState([]);
+  // Detect screen size on mount
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)"); // Adjust the breakpoint as needed
+    setShowFilters(mediaQuery.matches);
+  }, []);
  
 // Api fetch accommodations
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`http://192.168.183.29:5000/api/accommodations`);
+        const response = await fetch(`http://192.168.235.93:5000/api/accommodations`);
         if (!response.ok) {
           throw new Error("Failed to fetch accommodations.");
         }
@@ -39,6 +46,10 @@ const Home = () => {
        
 
         // Extract unique amenities
+        // Extract unique cities from accommodations
+        const uniqueCities = [...new Set(data.map(accommodation => accommodation.city))];
+        setCities(uniqueCities);
+        
         const amenitiesSet = new Set();
         normalizedData.forEach((acc) => acc.amenities.forEach((amenity) => amenitiesSet.add(amenity)));
         setAvailableAmenities([...amenitiesSet]);
@@ -48,6 +59,7 @@ const Home = () => {
         setLoading(false);
       }
     };
+    
 
     fetchData();
   }, []);
@@ -81,7 +93,7 @@ const handleSearchChange = (input) => {
 
   const fetchAvailability = async (id, startDate, endDate) => {
     try {
-      const response = await fetch(`http://192.168.183.29:5000/api/availability?accommodation_id=${id}&start_date=${startDate}&end_date=${endDate}`);
+      const response = await fetch(`http://192.168.235.93:5000/api/availability?accommodation_id=${id}&start_date=${startDate}&end_date=${endDate}`);
       if (!response.ok) {
         throw new Error("Failed to check availability.");
       }
@@ -149,12 +161,12 @@ const updateFilterCriteria = (field, value) => {
   if (error) return <div className="error">{error}</div>;
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-white">
       <div className="relative mt-2 mb-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-row md:flex-row items-center gap-4 w-full md:w-auto lg:w-[150vh]">
           {/* Search Bar */}
-   <div className="relative flex-grow">
- <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+          <div className="relative flex-grow">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
             <input
               type="text"
               value={searchInput}
@@ -168,9 +180,9 @@ const updateFilterCriteria = (field, value) => {
                   <div
                     key={index}
                     onClick={() => {
-          setSearchInput(suggestion); // Set input to selected suggestion
-          setSearchSuggestions([]); // Clear suggestions
-}}
+                      setSearchInput(suggestion); // Set input to selected suggestion
+                      setSearchSuggestions([]); // Clear suggestions
+                    }}
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   >
                     {suggestion}
@@ -195,11 +207,13 @@ const updateFilterCriteria = (field, value) => {
   updateFilterCriteria={updateFilterCriteria}
   availableAmenities={availableAmenities}
   closeFilters={() => setShowFilters(false)} // For closing the filter component
+  availabiity={availability}
+  cities={cities}
 />
 )}
       </div>
 
-<section className="mb-8 container mx-auto px-6 max-w-7xl">
+<section className="mb-8 container mx-auto absolute px-4 max-w-6xl">
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     {filteredAccommodations.map((accommodation) => (
       <Link
@@ -208,7 +222,9 @@ const updateFilterCriteria = (field, value) => {
         className="rounded-xl overflow-hidden shadow-md hover:shadow-lg bg-white transition-all duration-300 hover:-translate-y-1"
       >
         <div>
+          <div className="h-72">
           <AccommodationCarousel accommodation={accommodation} />
+          </div>
           <div className="p-4">
             <h3 className="font-semibold">{accommodation.title}</h3>
             <p className="text-sm text-gray-600 my-2">

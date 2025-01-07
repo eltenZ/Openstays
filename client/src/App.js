@@ -42,7 +42,7 @@ const App = () => {
     <Router>
       <Header />
 
-      <main className="pt-20 pb-16">
+      <main className="pt-16 pb-16">
         <Routes>
           <Route path="/accommodation" element={<Home />} />
           <Route

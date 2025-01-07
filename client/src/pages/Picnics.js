@@ -9,7 +9,7 @@ const Picnics = () => {
   useEffect(() => {
     const fetchPicnics = async () => {
       try {
-        const response = await fetch("http://192.168.183.29:5000/api/picnics");
+        const response = await fetch("http://192.168.235.93:5000/api/picnics");
         if (!response.ok) {
           throw new Error("Failed to fetch picnics.");
         }

@@ -192,7 +192,7 @@ const AccommodationDetails = ({ addBookingItem }) => {
       </div>
 
 {isBookingFormVisible && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+  <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
     <div className="bg-white rounded-xl p-8 max-w-md w-full">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">

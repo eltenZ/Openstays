@@ -42,9 +42,10 @@ const App = () => {
   return (
     <Router>
       <Header />
-      <LandingPage />
+    
       <main className="pt-16 pb-16">
         <Routes>
+        <Route path="/" element={<LandingPage />} />
           <Route path="/accommodation" element={<Home />} />
           <Route
             path="/accommodation/:id"

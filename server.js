@@ -12,7 +12,6 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // PostgreSQL Database connection
-// PostgreSQL Database connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL, // Use the Render external database URL
   ssl: {

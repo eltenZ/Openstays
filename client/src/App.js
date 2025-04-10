@@ -10,6 +10,7 @@ import Picnics from "./pages/Picnics";
 import PicnicDetails from "./pages/PicnicDetails";
 import Services from "./pages/Services";
 import Bookings from "./pages/Bookings";
+import { LandingPage } from "./pages/LangingPage"; // Landing page
 import AdminPanel from './pages/AdminPanel'; // Admin Dashboard page
 import PaymentModal from "./components/PaymentModal"; // Import the PaymentModal
 import { Home as HomeIcon, MapPin, TreePalm, User, Plus } from "lucide-react";
@@ -41,7 +42,7 @@ const App = () => {
   return (
     <Router>
       <Header />
-
+      <LandingPage />
       <main className="pt-16 pb-16">
         <Routes>
           <Route path="/accommodation" element={<Home />} />

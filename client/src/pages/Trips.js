@@ -10,7 +10,7 @@ const Trips = () => {
   useEffect(() => {
     const fetchTrips = async () => {
       try {
-        const response = await fetch("http://192.168.235.93:5000/api/trips");
+        const response = await fetch("${process.env.REACT_APP_API_BASE_URL}/api/trips");
         if (!response.ok) {
           throw new Error("Failed to fetch trips.");
         }

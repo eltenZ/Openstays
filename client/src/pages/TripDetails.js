@@ -12,7 +12,7 @@ const [isModalOpen, setIsModalOpen] = useState(false);
   useEffect(() => {
     const fetchTripDetails = async () => {
       try {
-        const response = await fetch(`http://192.168.235.93:5000/api/trips/${id}`);
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/trips/${id}`);
         if (!response.ok) {
           throw new Error("Failed to fetch trip details.");
         }

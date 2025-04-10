@@ -1,3 +1,6 @@
+
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -9,13 +12,14 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // PostgreSQL Database connection
+// PostgreSQL Database connection
 const pool = new Pool({
-  user: 'postgres', // Correct database user
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'openstays',
-  password: process.env.DB_PASSWORD || 'watuma', // Add the correct password here if applicable
-  port: process.env.DB_PORT || 5432,
+  connectionString: process.env.DATABASE_URL, // Use the Render external database URL
+  ssl: {
+    rejectUnauthorized: false, // Necessary for Render-hosted PostgreSQL
+  },
 });
+
 
 // Middleware
 app.use(cors());

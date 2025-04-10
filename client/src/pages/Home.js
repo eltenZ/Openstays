@@ -26,7 +26,7 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`http://192.168.235.93:5000/api/accommodations`);
+       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/accommodations`);
         if (!response.ok) {
           throw new Error("Failed to fetch accommodations.");
         }
@@ -93,7 +93,10 @@ const handleSearchChange = (input) => {
 
   const fetchAvailability = async (id, startDate, endDate) => {
     try {
-      const response = await fetch(`http://192.168.235.93:5000/api/availability?accommodation_id=${id}&start_date=${startDate}&end_date=${endDate}`);
+    const response = await fetch(
+  `${process.env.REACT_APP_API_BASE_URL}/api/availability?accommodation_id=${id}&start_date=${startDate}&end_date=${endDate}`
+);
+
       if (!response.ok) {
         throw new Error("Failed to check availability.");
       }

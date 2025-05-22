@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { SearchIcon, FilterIcon } from 'lucide-react';
 import AccommodationCard from '../components/AccommodationCard';
 import FilterPanel from '../components/FilterPanel';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
-const AccommodationsPage = () => {
+const HomePage = () => {
   const [accommodations, setAccommodations] = useState([]);
   const [filteredAccommodations, setFilteredAccommodations] = useState([]);
   const [availableAmenities, setAvailableAmenities] = useState([]);
@@ -12,6 +13,14 @@ const AccommodationsPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const navigate = useNavigate(); // Initialize useNavigate
+
+  // Handle card click to navigate to the accommodation details page
+  const handleCardClick = (id) => {
+    navigate(`/accommodation/${id}`);
+  };
+
 
   // API data fetching and normalization
   useEffect(() => {
@@ -195,6 +204,7 @@ const AccommodationsPage = () => {
             <AccommodationCard 
               key={accommodation.id} 
               accommodation={accommodation}
+              onClick={() => handleCardClick(accommodation.id)} // Pass the click handler
             />
           ))}
         </div>
@@ -205,6 +215,7 @@ const AccommodationsPage = () => {
             <FilterPanel 
               applyFilters={applyFilters} 
               availableAmenities={availableAmenities} 
+             
             />
           </div>
         </div>
@@ -213,4 +224,4 @@ const AccommodationsPage = () => {
   );
 };
 
-export default AccommodationsPage;
+export default HomePage;

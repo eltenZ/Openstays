@@ -4,29 +4,25 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 const ImageCarousel = ({ imageUrls }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Convert the image_urls string into an array
-  const images = imageUrls 
-    ? imageUrls.split(',').map(img => img.trim())
-    : [];
+  // Ensure imageUrls is an array
+  if (!imageUrls || imageUrls.length === 0) return null;
 
   const prevSlide = () => {
     setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? images.length - 1 : prevIndex - 1
+      prevIndex === 0 ? imageUrls.length - 1 : prevIndex - 1
     );
   };
 
   const nextSlide = () => {
     setCurrentIndex((prevIndex) =>
-      prevIndex === images.length - 1 ? 0 : prevIndex + 1
+      prevIndex === imageUrls.length - 1 ? 0 : prevIndex + 1
     );
   };
-
-  if (!images || images.length === 0) return null;
 
   return (
     <div className="relative w-full h-[500px] overflow-hidden rounded-2xl">
       <img
-        src={images[currentIndex]}
+        src={imageUrls[currentIndex]}
         alt={`Slide ${currentIndex + 1}`}
         className="w-full h-full object-cover transition-all duration-500"
       />

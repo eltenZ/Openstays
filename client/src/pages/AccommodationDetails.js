@@ -51,6 +51,12 @@ const AccommodationDetails = ({ addBookingItem }) => {
         const res = await fetch(`http://localhost:5000/api/accommodation/${id}`);
         if (!res.ok) throw new Error("Failed to fetch accommodation details");
         const data = await res.json();
+
+         // Split image_urls into an array and prefix with the server's base URL
+      data.image_urls = data.image_urls
+      ? data.image_urls.split(",").map((url) => `http://localhost:5000/${url.trim()}`)
+      : [];
+      
         data.amenities = data.amenities.split(",").map((a) => a.trim());
         setAccommodation(data);
  setAccommodation({

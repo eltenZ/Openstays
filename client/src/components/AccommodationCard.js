@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronLeftIcon, ChevronRightIcon, BedDoubleIcon } from 'lucide-react';
 
-const AccommodationCard = ({ accommodation }) => {
+import { ChevronLeftIcon, ChevronRightIcon,} from 'lucide-react';
+
+const AccommodationCard = ({ accommodation, onClick }) => {
+ 
+
+
   // Convert the image_urls string into an array.
   const images = accommodation.image_urls
     ? accommodation.image_urls.split(',').map(img => img.trim())
@@ -28,8 +31,10 @@ const AccommodationCard = ({ accommodation }) => {
   const highSeasonRate = Math.round(2.0 * standardRate);
 
   return (
-    <Link to={`/accommodation/${accommodation.id}`} className="block">
-      <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
+    
+      <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300"
+        onClick={onClick}
+        >
         {/* Image carousel */}
         <div className="relative h-64 overflow-hidden">
           <div
@@ -119,7 +124,7 @@ const AccommodationCard = ({ accommodation }) => {
           </div>
         </div>
       </div>
-    </Link>
+    
   );
 };
 

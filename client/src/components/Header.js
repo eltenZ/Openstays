@@ -2,7 +2,7 @@ import React, { useState } from 'react'; import { Link } from 'react-router-dom'
 
 const Header = () => { const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-const navLinks = [ { label: 'Accommodations', to: '/home' }, { label: 'Experiences', to: '/experiences' }, { label: 'Contact', to: '/contact' }, ];
+const navLinks = [ { label: 'Accommodations', to: '/' }, { label: 'Experiences', to: '/trips' }, { label: 'Contact', to: '/contact' }, ];
 
 return ( <header className="bg-white shadow-sm py-4 px-6 md:px-10 lg:px-16 fixed top-0 left-0 right-0 z-20"> <div className="flex justify-between items-center">
 

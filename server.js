@@ -11,12 +11,14 @@ const { Pool } = require('pg'); // PostgreSQL module
 const app = express();
 const port = process.env.PORT || 5000;
 
+
 // PostgreSQL Database connection
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // Use the Render external database URL
-  ssl: {
-    rejectUnauthorized: false, // Necessary for Render-hosted PostgreSQL
-  },
+  user: 'u0_a367', // Correct database user
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.DB_NAME || 'openstays',
+  password: process.env.DB_PASSWORD || null, // Add the correct password here if applicable
+  port: process.env.DB_PORT || 5432,
 });
 
 
@@ -59,18 +61,58 @@ app.get('/api/accommodations', async (req, res) => {
   }
 });
 
-// Fetch accommodation by ID
+// Fetch accommodation by ID (with host info)
 app.get('/api/accommodation/:id', async (req, res) => {
   const { id } = req.params;
+
   try {
-    const { rows } = await pool.query('SELECT * FROM accommodations WHERE id = $1', [id]);
+    const query = `
+      SELECT
+        a.*,
+        h.name AS host_name,
+        h.photo_url AS host_photo,
+        h.rating AS host_rating,
+        h.join_year AS host_join_year,
+        h.bio AS host_bio,
+        h.languages AS host_languages,
+        h.response_rate AS host_response_rate,
+        h.hosting_style AS host_style,
+        h.work AS host_work
+      FROM accommodations a
+      LEFT JOIN hosts h ON a.host_id = h.id
+      WHERE a.id = $1
+    `;
+
+    const { rows } = await pool.query(query, [id]);
+
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Accommodation not found' });
     }
+
     res.json(rows[0]);
   } catch (err) {
-    console.error('Error fetching accommodation:', err.message);
-    res.status(500).json({ error: 'Failed to fetch accommodation' });
+    console.error('Error fetching accommodation with host info:', err);
+    res.status(500).json({ error: 'Failed to fetch accommodation with host info' });
+  }
+});
+
+// Fetch reviews by accommodation ID
+app.get('/api/reviews', async (req, res) => {
+  const { accommodationId } = req.query;
+
+  if (!accommodationId) {
+    return res.status(400).json({ error: 'Missing accommodationId parameter' });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM reviews WHERE accommodation_id = $1 ORDER BY date DESC',
+      [accommodationId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching reviews:', err.message);
+    res.status(500).json({ error: 'Failed to fetch reviews' });
   }
 });
 

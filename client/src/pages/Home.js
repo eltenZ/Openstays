@@ -1,57 +1,46 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Filter, Search, Star } from "lucide-react";
-import AccommodationFilters from "../components/AccommodationFilters";
-import AccommodationCarousel from "../components/carousel.js";
+import React, { useState, useEffect } from 'react';
+import { SearchIcon, FilterIcon } from 'lucide-react';
+import AccommodationCard from '../components/AccommodationCard';
+import FilterPanel from '../components/FilterPanel';
 
-const Home = () => {
+const AccommodationsPage = () => {
   const [accommodations, setAccommodations] = useState([]);
-  
+  const [filteredAccommodations, setFilteredAccommodations] = useState([]);
   const [availableAmenities, setAvailableAmenities] = useState([]);
-  const [searchInput, setSearchInput] = useState(""); // State for search input
-  const [searchSuggestions, setSearchSuggestions] = useState([]); // State for search suggestions
+  const [searchInput, setSearchInput] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [availability, setAvailability] = useState([]);
-  const [cities, setCities] = useState([]);
-  // Detect screen size on mount
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 768px)"); // Adjust the breakpoint as needed
-    setShowFilters(mediaQuery.matches);
-  }, []);
- 
-// Api fetch accommodations
 
+  // API data fetching and normalization
   useEffect(() => {
     const fetchData = async () => {
       try {
-       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/accommodations`);
+        const response = await fetch('http://localhost:5000/api/accommodations');
         if (!response.ok) {
           throw new Error("Failed to fetch accommodations.");
         }
         const data = await response.json();
 
-        // Normalize accommodations data: convert `amenities` to arrays
-        const normalizedData = data.map((acc) => ({
+        // Normalize the accommodation data:
+        // - Convert `amenities` string to an array
+        // - Normalize `location` and `title` to lowercase for comparisons
+        const normalizedData = data.map(acc => ({
           ...acc,
           amenities: acc.amenities
-            ? acc.amenities.split(",").map((amenity) => amenity.trim().toLowerCase())
+            ? acc.amenities.split(",").map(amenity => amenity.trim().toLowerCase())
             : [],
-          location: acc.location.toLowerCase(), // Normalize location for comparison
-          title: acc.title.toLowerCase(), // Normalize title for comparison
+          location: acc.location.toLowerCase(),
+          title: acc.title.toLowerCase(),
         }));
 
         setAccommodations(normalizedData);
-       
+        setFilteredAccommodations(normalizedData);
 
         // Extract unique amenities
-        // Extract unique cities from accommodations
-        const uniqueCities = [...new Set(data.map(accommodation => accommodation.city))];
-        setCities(uniqueCities);
-        
         const amenitiesSet = new Set();
-        normalizedData.forEach((acc) => acc.amenities.forEach((amenity) => amenitiesSet.add(amenity)));
+        normalizedData.forEach(acc => acc.amenities.forEach(amenity => amenitiesSet.add(amenity)));
         setAvailableAmenities([...amenitiesSet]);
       } catch (err) {
         setError(err.message);
@@ -59,133 +48,114 @@ const Home = () => {
         setLoading(false);
       }
     };
-    
 
     fetchData();
   }, []);
 
+  // Existing search suggestions function
+  const fetchSearchSuggestions = async (query) => {
+    if (!query) {
+      setSearchSuggestions([]);
+      return;
+    }
 
-// Generate search suggestions based on input
-const generateSuggestions = (input) => {
-  if (!input) {
-    setSearchSuggestions([]); // Clear suggestions if input is empty
-    return;
-  }
-
-  const suggestions = accommodations
-    .filter((accommodation) =>
-      (accommodation.title || "").toLowerCase().includes(input.toLowerCase()) ||
-      (accommodation.location || "").toLowerCase().includes(input.toLowerCase())
-    )
-    .flatMap((accommodation) => [accommodation.title, accommodation.location]); // Extract title and location
-
-  // Remove duplicates and limit suggestions to 5
-  const uniqueSuggestions = Array.from(new Set(suggestions)).slice(0, 5);
-  setSearchSuggestions(uniqueSuggestions);
-};
-
-const handleSearchChange = (input) => {
-  setSearchInput(input); // Update search input state
-  generateSuggestions(input); // Generate suggestions based on input
-};
-
-// api for fetch availability
-
-  const fetchAvailability = async (id, startDate, endDate) => {
     try {
-    const response = await fetch(
-  `${process.env.REACT_APP_API_BASE_URL}/api/availability?accommodation_id=${id}&start_date=${startDate}&end_date=${endDate}`
-);
+      // Filter available titles and locations that match the query
+      const suggestions = accommodations
+        .filter(acc =>
+          acc.title.includes(query.toLowerCase()) ||
+          acc.location.includes(query.toLowerCase())
+        )
+        .flatMap(acc => [acc.title, acc.location]);
 
-      if (!response.ok) {
-        throw new Error("Failed to check availability.");
-      }
-      const data = await response.json();
-      return data.available; // Return true if available, false otherwise
+      // Deduplicate suggestions
+      const uniqueSuggestions = Array.from(new Set(suggestions));
+      setSearchSuggestions(uniqueSuggestions);
     } catch (error) {
-      console.error("Error fetching availability:", error.message);
-      return false; // Assume unavailable on error
+      console.error("Error fetching search suggestions:", error.message);
     }
   };
 
-// Logic for filters
-const [filterCriteria, setFilterCriteria] = useState({
-  priceRange: [0, Infinity], // [min, max]
-  location: "",
-  amenities: [], // Array of selected amenities
-  bedrooms: null,
-  maxGuests: null,
-}); 
+  const handleSearchChange = (input) => {
+    setSearchInput(input);
+    fetchSearchSuggestions(input);
+  };
 
- const filteredAccommodations = accommodations.filter((accommodation) => {
-  const matchesSearch =
-    (accommodation.title || "").toLowerCase().includes(searchInput.toLowerCase()) ||
-    (accommodation.location || "").toLowerCase().includes(searchInput.toLowerCase());
+  const handleSearchSelect = (selectedOption) => {
+    setSearchInput(selectedOption);
+    setSearchSuggestions([]);
+    const searchedData = accommodations.filter(acc =>
+      acc.title.includes(selectedOption.toLowerCase()) ||
+      acc.location.includes(selectedOption.toLowerCase())
+    );
+    setFilteredAccommodations(searchedData);
+  };
 
-  const matchesPrice =
-    accommodation.price_per_night >= filterCriteria.priceRange[0] &&
-    accommodation.price_per_night <= filterCriteria.priceRange[1];
+  // Existing filtering function (to be passed to the FilterPanel)
+  const applyFilters = async (filters) => {
+    let filteredData = accommodations.filter(accommodation => {
+      // Filter by destination (if provided)
+      if (filters.destination && !accommodation.location.includes(filters.destination.toLowerCase())) {
+        return false;
+      }
 
-  const matchesLocation = filterCriteria.location
-    ? accommodation.location.toLowerCase().includes(filterCriteria.location.toLowerCase())
-    : true;
+      // Filter by price range (using price_per_night as standard rate)
+      const [minPrice, maxPrice] = filters.priceRange || [0, Infinity];
+      if (
+        accommodation.price_per_night < minPrice ||
+        accommodation.price_per_night > maxPrice
+      ) {
+        return false;
+      }
 
-  const matchesAmenities = filterCriteria.amenities.length
-    ? filterCriteria.amenities.every((amenity) => accommodation.amenities.includes(amenity.toLowerCase()))
-    : true;
+      // Filter by rooms and guests
+      if (filters.rooms && filters.rooms > accommodation.bedrooms) {
+        return false;
+      }
+      if (filters.guests && filters.guests > accommodation.max_guests) {
+        return false;
+      }
 
-  const matchesBedrooms = filterCriteria.bedrooms
-    ? accommodation.bedrooms >= filterCriteria.bedrooms
-    : true;
+      // Filter by amenities
+      if (filters.amenities) {
+        for (const [amenity, selected] of Object.entries(filters.amenities)) {
+          if (selected && !accommodation.amenities.includes(amenity.toLowerCase())) {
+            return false;
+          }
+        }
+      }
 
-  const matchesMaxGuests = filterCriteria.maxGuests
-    ? accommodation.max_guests >= filterCriteria.maxGuests
-    : true;
+      return true;
+    });
 
-  return (
-    matchesSearch &&
-    matchesPrice &&
-    matchesLocation &&
-    matchesAmenities &&
-    matchesBedrooms &&
-    matchesMaxGuests
-  );
-});
+    // Availability check by dates can be added here as needed
 
-const updateFilterCriteria = (field, value) => {
-  setFilterCriteria((prevCriteria) => ({
-    ...prevCriteria,
-    [field]: value,
-  }));
-};
-
+    setFilteredAccommodations(filteredData);
+  };
 
   if (loading) return <div className="loading">Loading...</div>;
   if (error) return <div className="error">{error}</div>;
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="relative mt-2 mb-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-row md:flex-row items-center gap-4 w-full md:w-auto lg:w-[150vh]">
-          {/* Search Bar */}
-          <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+    <div className="w-full min-h-screen bg-white">
+      {/* Search and Filter Bar */}
+      <div className="bg-white border-b py-4 px-6 md:px-10 lg:px-16 sticky top-0 z-10">
+        <div className="flex items-center justify-between">
+          <div className="relative flex-1 max-w-lg">
             <input
               type="text"
+              placeholder="Search accommodations..."
               value={searchInput}
               onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Find your stay"
-              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-800"
             />
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             {searchSuggestions.length > 0 && (
               <div className="absolute mt-1 w-full bg-white border rounded-lg shadow-md max-h-40 overflow-y-auto z-50">
                 {searchSuggestions.map((suggestion, index) => (
                   <div
                     key={index}
-                    onClick={() => {
-                      setSearchInput(suggestion); // Set input to selected suggestion
-                      setSearchSuggestions([]); // Clear suggestions
-                    }}
+                    onClick={() => handleSearchSelect(suggestion)}
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   >
                     {suggestion}
@@ -194,79 +164,53 @@ const updateFilterCriteria = (field, value) => {
               </div>
             )}
           </div>
-
-          {/* Filter Button */}
           <button
+            className="md:hidden ml-4 flex items-center text-gray-600"
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center justify-center w-12 h-12 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <Filter className="w-6 h-6" />
+            <FilterIcon className="h-5 w-5 mr-1" />
+            <span>Filters</span>
           </button>
         </div>
-
-        {showFilters && (
-<AccommodationFilters
-  filterCriteria={filterCriteria}
-  updateFilterCriteria={updateFilterCriteria}
-  availableAmenities={availableAmenities}
-  closeFilters={() => setShowFilters(false)} // For closing the filter component
-  availabiity={availability}
-  cities={cities}
-/>
-)}
       </div>
 
-<section className="mb-8 container mx-auto absolute px-4 max-w-6xl">
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-    {filteredAccommodations.map((accommodation) => (
-      <Link
-        to={`/accommodation/${accommodation.id}`}
-        key={accommodation.id}
-        className="rounded-xl overflow-hidden shadow-md hover:shadow-lg bg-white transition-all duration-300 hover:-translate-y-1"
+      {/* Mobile Filter Panel */}
+      <div
+        className={`md:hidden transition-all duration-300 ${showFilters ? 'max-h-screen opacity-100 py-4' : 'max-h-0 opacity-0 overflow-hidden'}`}
       >
-        <div>
-          <div className="h-72">
-          <AccommodationCarousel accommodation={accommodation} />
-          </div>
-          <div className="p-4">
-            <h3 className="font-semibold">{accommodation.title}</h3>
-            <p className="text-sm text-gray-600 my-2">
-              {accommodation.description.slice(0, 75)}...
-            </p>
-            <div className="flex items-center gap-1 mb-2">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  size={16}
-                  className={`${
-                    i < accommodation.rating ? "text-yellow-400" : "text-gray-300"
-                  }`}
-                />
-              ))}
-              <span className="text-sm text-gray-600">
-                {accommodation.rating || 0} ({accommodation.reviews_count || 0} reviews)
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-bold">
-                Kes {accommodation.price_per_night}
-                <span className="text-sm text-gray-500">/night</span>
-              </span>
-              <button
-                className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors duration-300"
-                aria-label={`Book ${accommodation.title}`}
-              >
-                Book now
-              </button>
-            </div>
+        <div className="px-6">
+          <FilterPanel 
+            isMobile={true} 
+            applyFilters={applyFilters} 
+            availableAmenities={availableAmenities} 
+          />
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="flex flex-col md:flex-row px-6 md:px-10 lg:px-16 py-6 gap-8">
+        {/* Accommodation Cards Grid */}
+        <div className="w-full md:w-2/3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+          {filteredAccommodations.map(accommodation => (
+            <AccommodationCard 
+              key={accommodation.id} 
+              accommodation={accommodation}
+            />
+          ))}
+        </div>
+        {/* Desktop Filter Sidebar */}
+        <div className="hidden md:block w-1/3">
+          <div className="sticky top-24">
+            <h2 className="text-xl font-light mb-6 text-gray-800">Filters</h2>
+            <FilterPanel 
+              applyFilters={applyFilters} 
+              availableAmenities={availableAmenities} 
+            />
           </div>
         </div>
-      </Link>
-    ))}
-  </div>
-</section>
-    </main>
+      </main>
+    </div>
   );
 };
 
-export default Home;
+export default AccommodationsPage;

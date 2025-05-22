@@ -1,0 +1,499 @@
+
+require('dotenv').config();
+
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const multer = require('multer');
+const fs = require('fs');
+const { Pool } = require('pg'); // PostgreSQL module
+
+const app = express();
+const port = process.env.PORT || 5000;
+
+
+// PostgreSQL Database connection
+const pool = new Pool({
+  user: 'u0_a367', // Correct database user
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.DB_NAME || 'openstays',
+  password: process.env.DB_PASSWORD || null, // Add the correct password here if applicable
+  port: process.env.DB_PORT || 5432,
+});
+
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use('/images', express.static(path.join(__dirname, 'client/public/images')));
+
+// Multer configuration for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, 'client/public/uploads');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const fileExtension = path.extname(file.originalname);
+    const baseName = req.body.title.replace(/ /g, '_').toLowerCase();
+    cb(null, `${baseName}-${Date.now()}${fileExtension}`);
+  },
+});
+const upload = multer({ storage });
+
+// Accommodation Routes
+// Fetch all accommodations
+app.get('/api/accommodations', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM accommodations');
+    const accommodations = rows.map(row => ({
+      ...row,
+      price_per_night: parseFloat(row.price_per_night),
+    }));
+    res.json(accommodations);
+  } catch (err) {
+    console.error('Error fetching accommodations:', err.message);
+    res.status(500).json({ error: 'Failed to fetch accommodations' });
+  }
+});
+
+// Fetch accommodation by ID (with host info)
+app.get('/api/accommodation/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const query = `
+      SELECT
+        a.*,
+        h.name AS host_name,
+        h.photo_url AS host_photo,
+        h.rating AS host_rating,
+        h.join_year AS host_join_year,
+        h.bio AS host_bio,
+        h.languages AS host_languages,
+        h.response_rate AS host_response_rate,
+        h.hosting_style AS host_style,
+        h.work AS host_work
+      FROM accommodations a
+      LEFT JOIN hosts h ON a.host_id = h.id
+      WHERE a.id = $1
+    `;
+
+    const { rows } = await pool.query(query, [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Accommodation not found' });
+    }
+
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Error fetching accommodation with host info:', err);
+    res.status(500).json({ error: 'Failed to fetch accommodation with host info' });
+  }
+});
+
+// Fetch reviews by accommodation ID
+app.get('/api/reviews', async (req, res) => {
+  const { accommodationId } = req.query;
+
+  if (!accommodationId) {
+    return res.status(400).json({ error: 'Missing accommodationId parameter' });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM reviews WHERE accommodation_id = $1 ORDER BY date DESC',
+      [accommodationId]
+    );
+    res.json(rows);
+g  } catch (err) {
+    console.error('Error fetching reviews:', err.message);
+    res.status(500).json({ error: 'Failed to fetch reviews' });
+  }
+});
+
+// Check availability
+app.get('/api/availability', async (req, res) => {
+  const { accommodation_id, start_date, end_date } = req.query;
+
+  // Validate accommodation_id
+  if (!accommodation_id) {
+    return res.status(400).json({ error: 'Accommodation ID is required' });
+  }
+
+  try {
+    let query = `SELECT start_date, end_date, is_available
+                 FROM availability
+                 WHERE accommodation_id = $1`;
+    const params = [accommodation_id];
+
+    // Add date filtering if dates are provided
+    if (start_date && end_date) {
+      query += ` AND NOT (start_date > $3 OR end_date < $2)`;
+      params.push(start_date, end_date);
+    }
+
+    const { rows } = await pool.query(query, params);
+
+    // Return detailed availability data
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching availability:', err.message);
+    res.status(500).json({ error: 'Failed to fetch availability' });
+  }
+});
+
+// Book accommodation
+app.post('/api/bookings', async (req, res) => {
+  const { accommodation_id, user_id, start_date, end_date } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO bookings (accommodation_id, user_id, start_date, end_date, status)
+       VALUES ($1, $2, $3, $4, 'Pending Payment') RETURNING *`,
+      [accommodation_id, user_id, start_date, end_date]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error('Error creating booking:', err.message);
+    res.status(500).json({ error: 'Failed to create booking' });
+  }
+});
+
+// Upload accommodation with images
+app.post('/api/accommodations', upload.array('images'), async (req, res) => {
+  const { title, description, price_per_night, location, city, country, max_guests } = req.body;
+
+  if (!title || !description || !price_per_night || !location || !city || !country || !max_guests) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const imageUrls = req.files.map(file => `/uploads/${file.filename}`);
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO accommodations
+       (title, description, price_per_night, location, city, country, max_guests, images)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [title, description, price_per_night, location, city, country, max_guests, imageUrls]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error('Error adding accommodation:', err.message);
+    res.status(500).json({ error: 'Failed to add accommodation' });
+  }
+});
+
+// Trip Routes
+// Fetch all trips
+app.get('/api/trips', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM trips ORDER BY created_at DESC');
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error('Error fetching trips:', error.message);
+    res.status(500).json({ error: 'Failed to fetch trips' });
+  }
+});
+
+// Fetch trip details by ID
+app.get('/api/trips/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await pool.query('SELECT * FROM trips WHERE id = $1', [id]);
+    if (!rows.length) return res.status(404).json({ error: 'Trip not found' });
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    console.error('Error fetching trip:', error.message);
+    res.status(500).json({ error: 'Failed to fetch trip' });
+  }
+});
+
+// Create a new trip
+app.post('/api/trips', async (req, res) => {
+  const { title, description, location, image, price, dates, max_guests, duration } = req.body;
+  if (!title || !description || !location || !price || !max_guests) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO trips (title, description, location, image, price, dates, max_guests, duration)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [title, description, location, image, price, dates, max_guests, duration]
+    );
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    console.error('Error creating trip:', error.message);
+    res.status(500).json({ error: 'Failed to create trip' });
+  }
+});
+
+// API to get all picnics
+app.get('/api/picnics', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM picnics');
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// API to get a single picnic by ID
+app.get('/api/picnics/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('SELECT * FROM picnics WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Picnic not found' });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// API to create a new picnic
+app.post('/api/picnics', async (req, res) => {
+  const { title, description, date, location, price } = req.body;
+  try {
+    const result = await pool.query(
+      'INSERT INTO picnics (title, description, date, location, price) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [title, description, date, location, price]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// API to update a picnic
+app.put('/api/picnics/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, description, date, location, price } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE picnics SET title = $1, description = $2, date = $3, location = $4, price = $5 WHERE id = $6 RETURNING *',
+      [title, description, date, location, price, id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Picnic not found' });
+    }
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// API to delete a picnic
+app.delete('/api/picnics/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM picnics WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Picnic not found' });
+    }
+    res.status(200).json({ message: 'Picnic deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// API to create reservations
+
+app.post('/api/reservations', async (req, res) => {
+  const { customerInfo, bookingItems, totalAmount, invoiceId } = req.body;
+
+  const client = await pool.connect(); // Get a database client for the transaction
+  try {
+    await client.query('BEGIN'); // Start transaction
+
+    // Step 1: Insert or find the user
+    const userQuery = `
+      INSERT INTO users (name, phone, email)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, phone = EXCLUDED.phone
+      RETURNING id;
+    `;
+    const userValues = [customerInfo.name, customerInfo.phone, customerInfo.email];
+    const userResult = await client.query(userQuery, userValues);
+    const userId = userResult.rows[0].id;
+
+    // Step 2: Create the reservation record
+    const reservationQuery = `
+      INSERT INTO reservations (user_id, unique_invoice_id, status, total_cost)
+      VALUES ($1, $2, 'Pending', $3)
+      RETURNING id;
+    `;
+    const reservationValues = [userId, invoiceId, totalAmount];
+    const reservationResult = await client.query(reservationQuery, reservationValues);
+    const reservationId = reservationResult.rows[0].id;
+
+    // Step 3: Insert reservation items
+    const itemQueries = bookingItems.map((item) => {
+      return client.query(
+        `
+        INSERT INTO reservation_items (reservation_id, description, cost, quantity)
+        VALUES ($1, $2, $3, $4)
+        `,
+        [reservationId, item.name, item.price, item.nights || 1]
+      );
+    });
+    await Promise.all(itemQueries); // Execute all item inserts in parallel
+
+    await client.query('COMMIT'); // Commit the transaction
+    res.status(201).json({ message: 'Reservation created successfully', reservationId });
+  } catch (error) {
+    await client.query('ROLLBACK'); // Rollback the transaction on error
+    console.error('Error creating reservation:', error.message);
+    res.status(500).json({ error: 'Failed to create reservation' });
+  } finally {
+    client.release(); // Release the client back to the pool
+  }
+});
+
+// API to fetch reservations at AdminPanel
+
+app.get('/api/reservations', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        r.id AS reservation_id,
+        r.unique_invoice_id,
+        r.status,
+        r.total_cost,
+        r.amount_paid,
+        r.created_at AS booking_date,
+        u.name AS customer_name,
+        u.email AS customer_email,
+        u.phone AS customer_phone,
+        JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'description', ri.description,
+            'location', COALESCE(a.location, t.location, p.location, 'Unknown'),
+            'cost', ri.cost,
+            'quantity', ri.quantity
+          )
+        ) AS reservation_items
+      FROM reservations r
+      JOIN users u ON r.user_id = u.id
+      LEFT JOIN reservation_items ri ON r.id = ri.reservation_id
+      LEFT JOIN accommodations a ON a.title = ri.description
+      LEFT JOIN trips t ON t.title = ri.description
+      LEFT JOIN picnics p ON p.title = ri.description
+      GROUP BY r.id, u.id
+    `;
+    const { rows } = await pool.query(query);
+
+    // Transform response for frontend expectations
+    const transformedData = rows.map(row => ({
+      id: row.reservation_id,
+      guest: row.customer_name,
+      email: row.customer_email,
+      phone: row.customer_phone,
+      invoiceNumber: row.unique_invoice_id,
+      status: row.status,
+      bookingDate: row.booking_date,
+      items: row.reservation_items,
+      total: `Kes ${parseFloat(row.total_cost).toLocaleString()}`,
+      amountPaid: `Kes ${parseFloat(row.amount_paid).toLocaleString()}`,
+    }));
+
+    res.json(transformedData);
+  } catch (error) {
+    console.error('Error fetching reservations:', error.message);
+    res.status(500).json({ error: 'Failed to fetch reservations' });
+  }
+});
+
+//API to get listings for adminpanel
+
+app.get('/api/listings', async (req, res) => {
+  try {
+    const accommodationsQuery = `
+      SELECT 
+        id, title, image_urls, location, price_per_night AS price, status 
+      FROM accommodations
+    `;
+    const tripsQuery = `
+      SELECT 
+        id, title, image, location, price, status 
+      FROM trips
+    `;
+    const picnicsQuery = `
+      SELECT 
+        id, title, image, location, price, status 
+      FROM picnics
+    `;
+
+    const [accommodations, trips, picnics] = await Promise.all([
+      pool.query(accommodationsQuery),
+      pool.query(tripsQuery),
+      pool.query(picnicsQuery),
+    ]);
+
+    const listings = [
+      ...accommodations.rows.map(accommodation => ({
+        id: accommodation.id,
+        title: accommodation.title,
+        location: accommodation.location,
+        price: `$${parseFloat(accommodation.price).toFixed(2)}/night`,
+        status: accommodation.status,
+        category: 'Stays',
+	image: accommodation.image_urls,
+      })),
+      ...trips.rows.map(trip => ({
+        id: trip.id,
+        title: trip.title,
+        location: trip.location,
+        price: `$${parseFloat(trip.price).toFixed(2)}`,
+        status: trip.status,
+        category: 'Trips',
+	image: trip.image,
+      })),
+      ...picnics.rows.map(picnic => ({
+        id: picnic.id,
+        title: picnic.title,
+        location: picnic.location,
+        price: `$${parseFloat(picnic.price).toFixed(2)}`,
+        status: picnic.status,
+        category: 'Picnics',
+	image: picnic.image,
+      })),
+    ];
+
+    res.json(listings);
+  } catch (error) {
+    console.error('Error fetching listings:', error.message);
+    res.status(500).json({ error: 'Failed to fetch listings' });
+  }
+});
+
+// Api to update reservation status
+
+app.put('/api/reservations/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    const query = `UPDATE reservations SET status = $1 WHERE id = $2 RETURNING *`;
+    const { rows } = await pool.query(query, [status, id]);
+    if (!rows.length) return res.status(404).json({ error: 'Reservation not found' });
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error updating reservation status:', error.message);
+    res.status(500).json({ error: 'Failed to update reservation status' });
+  }
+});
+
+
+
+// Start the server
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server is running on http://0.0.0.0:${port}`);
+});

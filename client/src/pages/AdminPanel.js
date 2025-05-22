@@ -36,7 +36,7 @@ const AdminPanel = () => {
 
 useEffect(() => {
   async function fetchReservations() {
-    const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/reservations`);
+    const response = await fetch(`http://localhost:5000/api/reservations`);
     const data = await response.json();
     setReservations(data);
   }
@@ -48,7 +48,7 @@ const [listings, setListings] = useState([]);
 
 useEffect(() => {
   async function fetchListings() {
-    const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/listings`);
+    const response = await fetch(`http://localhost:5000/api/listings`);
     const data = await response.json();
     setListings(data);
   }

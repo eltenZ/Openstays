@@ -1,267 +1,306 @@
+// src/pages/AccommodationDetails.js
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import {
-  ChevronLeft,
-  ChevronRight,
-  MapPin,
-  Star,
-  Wifi,
-  Car,
-  Coffee,
-  Tv,
-  BedDouble, X, Minus, Plus
-} from "lucide-react";
-import { DayPicker } from "react-day-picker";
-import 'react-day-picker/dist/style.css';
-import SuccessModal from "../components/SuccessModal";
-import AccommodationCarousel from "../components/carousel";
+import { ChevronLeftIcon } from "lucide-react";
+
+import ImageCarousel from "../components/ImageCarousel";
+import AccommodationHeader from "../components/AccommodationHeader";
+import Description from "../components/Description";
+import Amenities from "../components/Amenities";
+import LocationMap from "../components/LocationMap";
+import HostInfo from "../components/HostInfo";
+import Reviews from "../components/Reviews";
+import FAQ from "../components/FAQ";
+import BookingCalendar from "../components/BookingCalendar";
+
+// Helper to convert API’s date‐range records into an array of Date objects that are unavailable.
+function extractUnavailableDates(records) {
+  const unavailable = [];
+  records.forEach((r) => {
+    if (!r.is_available) {
+      let current = new Date(r.start_date);
+      const end = new Date(r.end_date);
+      while (current <= end) {
+        unavailable.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+      }
+    }
+  });
+  return unavailable;
+}
 
 const AccommodationDetails = ({ addBookingItem }) => {
   const { id } = useParams();
-
-  // States
   const [accommodation, setAccommodation] = useState(null);
-  const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [dateRange, setDateRange] = useState({ from: null, to: null });
-  const [isBookingFormVisible, setIsBookingFormVisible] = useState(false);
-  const [guests, setGuests] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Fetch Accommodation Details
+  const [selectedDates, setSelectedDates] = useState({
+    checkIn: null,
+    checkOut: null,
+  });
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [unavailableDates, setUnavailableDates] = useState([]);  // ← always an array
+  const [totalPrice, setTotalPrice] = useState(null);
+
+  // Fetch accommodation details
   useEffect(() => {
-    const fetchAccommodationDetails = async () => {
+    async function fetchDetails() {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/accommodation/${id}`);
-        if (!response.ok) throw new Error("Failed to fetch accommodation details");
-        const data = await response.json();
-        data.amenities = data.amenities.split(",").map((item) => item.trim());
+	setLoading(true); // Reset loading state
+        const res = await fetch(`http://localhost:5000/api/accommodation/${id}`);
+        if (!res.ok) throw new Error("Failed to fetch accommodation details");
+        const data = await res.json();
+        data.amenities = data.amenities.split(",").map((a) => a.trim());
         setAccommodation(data);
-
-        // Fetch availability data
-        await fetchAvailability(id);
+ setAccommodation({
+ ...data,
+  // ensure we have an array even if DB returns null
+ highlights: Array.isArray(data.highlights) ? data.highlights : []
+ });
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchAccommodationDetails();
+    }
+    fetchDetails();
   }, [id]);
 
-  // Fetch Availability Data
-  const fetchAvailability = async (accommodationId) => {
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/availability?accommodation_id=${accommodationId}`);
-      if (!response.ok) throw new Error("Failed to fetch availability");
-      const data = await response.json();
-      setAvailability(data);
-    } catch (err) {
-      console.error("Error fetching availability:", err.message);
+  // Fetch availability whenever month or id changes
+  useEffect(() => {
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+    const start_date = new Date(y, m, 1).toISOString().split("T")[0];
+    const end_date = new Date(y, m + 1, 0).toISOString().split("T")[0];
+
+    async function fetchAvail() {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/availability?accommodation_id=${id}&start_date=${start_date}&end_date=${end_date}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch availability");
+        const records = await res.json();
+        const safe = Array.isArray(records) ? records : [];
+        if (!Array.isArray(records)) {
+          console.warn("availability API returned non‑array:", records);
+        }
+        setUnavailableDates(extractUnavailableDates(safe));
+      } catch (err) {
+        console.error("Error loading availability:", err.message);
+      }
     }
+    fetchAvail();
+  }, [id, currentMonth]);
+
+  // Compute total price
+  useEffect(() => {
+    const { checkIn, checkOut } = selectedDates;
+    if (checkIn && checkOut && accommodation) {
+      const nights = Math.ceil(
+        (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      setTotalPrice(nights * accommodation.price_per_night);
+    } else {
+      setTotalPrice(null);
+    }
+  }, [selectedDates, accommodation]);
+
+  const handleDateSelection = (checkIn, checkOut) => {
+    setSelectedDates({ checkIn, checkOut });
   };
 
-  // Generate Disabled Dates
-  const generateDisabledDates = (availability) =>
-    Array.isArray(availability)
-      ? availability.filter((range) => !range.is_available).map((range) => ({
-          from: new Date(range.start_date),
-          to: new Date(range.end_date),
-        }))
-      : [];
-
-
-
-  // Toggle Booking Form Visibility
-  const handleBookingFormToggle = () => {
-    setIsBookingFormVisible((prev) => !prev);
+  const handleMonthChange = (newMonth) => {
+    setCurrentMonth(newMonth);
   };
 
-  // Handle Booking Submission
-  const handleBookingSubmit = (e) => {
-    e.preventDefault();
-
-    if (!dateRange.from || !dateRange.to) {
-      alert("Please select a valid date range");
-      return;
-    }
-
-    const nights = Math.ceil((dateRange.to - dateRange.from) / (1000 * 60 * 60 * 24));
-    const totalCost = nights * accommodation.price_per_night;
-
-    const bookingDetails = {
+  const handleBookingSubmit = () => {
+    const { checkIn, checkOut } = selectedDates;
+    if (!checkIn || !checkOut) return;
+    const nights = Math.ceil(
+      (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const newBooking = {
       id: Date.now().toString(),
       name: accommodation.title,
       location: accommodation.location,
       price: accommodation.price_per_night,
       nights,
-      guests,
-      checkIn: dateRange.from.toISOString().split("T")[0],
-      checkOut: dateRange.to.toISOString().split("T")[0],
+      checkIn,
+      checkOut,
       hostId: accommodation.host_id,
       amenities: accommodation.amenities,
     };
-
-    addBookingItem(bookingDetails);
-    setIsModalOpen(true);
-    setIsBookingFormVisible(false);
-
-    // Reset form
-    setDateRange({ from: null, to: null });
-    setGuests(1);
+    addBookingItem && addBookingItem(newBooking);
+    setSelectedDates({ checkIn: null, checkOut: null });
   };
 
-  // Handle Guest Count Change
-  const handleGuestChange = (increment) => {
-    setGuests((prev) => Math.max(1, prev + increment));
-  };
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
-
-  const iconsMapping = {
-    Wifi: <Wifi className="w-6 h-6" />,
-    Car: <Car className="w-6 h-6" />,
-    Tv: <Tv className="w-6 h-6" />,
-    Coffee: <Coffee className="w-6 h-6" />,
-    Bed: <BedDouble className="w-6 h-6" />,
-  };
+  if (loading) return <div className="text-center py-12">Loading...</div>;
+  if (error) return <div className="text-center py-12 text-red-600">Error: {error}</div>;
 
   return (
-    <main className="max-w-7xl mx-auto w-full md:w-1/2 md:mx-4 px-4 py-2">
-      {/* Image Carousel */}
-      <div className="relative h-96 md:h-128 w-full rounded-xl mb-2">
-      <AccommodationCarousel accommodation={accommodation} />
-      </div>
+  <div className="w-full bg-white">
+  {/* Header Navigation */}
+  <div className="px-4 py-4 border-b border-gray-200">
+    <div className="max-w-7xl flex items-center">
+      <a href="#" className="flex items-center text-gray-600 hover:text-gray-900">
+        <ChevronLeftIcon size={16} />
+        <span className="ml-1 text-sm">Back to search results</span>
+      </a>
+    </div>
+  </div>
 
-      {/* Accommodation Info */}
-      <div className="bg-white rounded-xl shadow-xs p-4 w-full md:w-[150vh]">
-        <div className="grid md:grid-cols-3 gap-2">
-          <div className="md:col-span-1">
-            <h1 className="text-3xl font-bold">{accommodation?.title}</h1>
-            <div className="flex items-center gap-2 text-gray-600">
-              <MapPin className="w-4 h-4" />
-              <span>{accommodation?.location}</span>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-lg text-gray-600">From</p>
-            <p className="text-3xl font-bold text-blue-500">Kes {accommodation?.price_per_night}/night</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="grid md:grid-cols-3 gap-8">
-        {/* About and Amenities */}
-        <div className="md:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <h2 className="text-2xl font-bold mb-4">About This Place</h2>
-            <p className="text-gray-600 mb-6">{accommodation?.description}</p>
-            <h3 className="text-xl font-semibold mb-4">Amenities</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {accommodation?.amenities?.map((amenity, index) => (
-                <div key={index} className="flex items-center gap-2 p-3 rounded-lg bg-gray-50">
-                  {iconsMapping[amenity] || <BedDouble className="w-6 h-6" />}
-                  <span>{amenity}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+  {/* Main content */}
+  <main className="max-w-7xl mx-auto px-4 py-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Left/Main Column */}
+      <div className="lg:col-span-2">
+        <ImageCarousel imageUrls={accommodation.image_urls} />
+        <div className="mt-6">
+          <AccommodationHeader
+            title={accommodation.title}
+            location={accommodation.location}
+            rating={accommodation.rating || 4.5}
+            pricePerNight={accommodation.price_per_night}
+          />
         </div>
 
-        {/* Calendar and Booking */}
-        <div className="relative md:absolute md:mt-2 md:top-16 md:right-16 md:col-span-1 w-full md:w-1/3 items-center">
-          <div className="bg-white rounded-xl shadow p-4 sticky top-8 w-full">
-            <DayPicker
-              mode="range"
-              selected={dateRange}
-              onSelect={setDateRange}
-              disabled={generateDisabledDates(availability)}
+        <hr className="py-4" />
+        <Description
+          description={accommodation.description}
+          highlights={accommodation.highlights}
+          
+        />
+
+        <hr className="my-8 border-gray-200" />
+        <Amenities amenities={accommodation.amenities} />
+{/* Mobile calendar display */}
+<div className="lg:hidden mt-8">
+  <div className="rounded-lg p-4 border border-gray-200">
+    <BookingCalendar
+      onDateSelection={handleDateSelection}
+      selectedDates={selectedDates}
+      unavailableDates={unavailableDates}
+      currentMonth={currentMonth}
+      onMonthChange={handleMonthChange}
+    />
+    {totalPrice && (
+      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+        <div className="flex justify-between items-center">
+          <span className="font-medium">Total</span>
+          <span className="font-semibold">Kes {totalPrice}</span>
+        </div>
+      </div>
+    )}
+    <button
+      onClick={handleBookingSubmit}
+      className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+    >
+      Reserve
+    </button>
+  </div>
+<div className="mt-4 flex justify-between">
+  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+    Save to Wishlist
+  </button>
+  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+    Share Listing
+  </button>
+</div>
+
+<div className="mt-6 p-4 bg-gray-50 rounded-lg">
+  <h3 className="font-medium text-sm">Not available for your dates?</h3>
+  <p className="text-sm text-gray-600 mt-1">
+    Get notified when this property becomes available.
+  </p>
+  <button className="mt-2 w-full border border-gray-300 hover:border-gray-400 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors">
+    Set Availability Alert
+  </button>
+</div>
+</div>
+
+        <hr className="my-8 border-gray-200" />
+        <LocationMap location={accommodation.location} />
+
+        <hr className="my-8 border-gray-200" />
+        <HostInfo
+  name={accommodation.host_name}
+  photo={accommodation.host_photo}
+  rating={accommodation.host_rating}
+  joinYear={accommodation.host_join_year}
+  bio={accommodation.host_bio}
+  languages={accommodation.host_languages}
+  responseRate={accommodation.host_response_rate}
+  style={accommodation.host_style}
+  work={accommodation.host_work}
+/>
+
+        <hr className="my-8 border-gray-200" />
+        <div className="lg:hidden">
+           <Reviews accommodationId={id} vertical={false} />
+          <hr className="my-8 border-gray-200" />
+        </div>
+
+        <FAQ />
+      </div>
+
+      {/* Right/Sidebar Column */}
+      <div className="hidden lg:block lg:col-span-1">
+        <div className="sticky top-8 space-y-4">
+          <div className="rounded-lg p-6 border border-gray-200">
+            <BookingCalendar
+              onDateSelection={handleDateSelection}
+              selectedDates={selectedDates}
+              unavailableDates={unavailableDates}
+              currentMonth={currentMonth}
+              onMonthChange={handleMonthChange}
             />
+
+            {totalPrice && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total</span>
+                  <span className="font-semibold">Kes {totalPrice}</span>
+                </div>
+              </div>
+            )}
+
             <button
-              onClick={handleBookingFormToggle}
-              className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors mt-6"
+              onClick={handleBookingSubmit}
+              className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
             >
               Reserve
             </button>
+
+            <div className="mt-4 flex justify-between">
+              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                Save to Wishlist
+              </button>
+              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                Share Listing
+              </button>
+            </div>
+
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-medium text-sm">Not available for your dates?</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Get notified when this property becomes available.
+              </p>
+              <button className="mt-2 w-full border border-gray-300 hover:border-gray-400 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors">
+                Set Availability Alert
+              </button>
+            </div>
+          </div>
+
+          <div className="hidden lg:block border border-gray-200 rounded-lg">
+	 <Reviews accommodationId={id} vertical={true} />
           </div>
         </div>
       </div>
-
-{isBookingFormVisible && (
-  <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-    <div className="bg-white rounded-xl p-8 max-w-md w-full">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-2xl font-bold">Complete Your Booking</h3>
-        <button onClick={() => setIsBookingFormVisible(false)}>
-          <X className="w-6 h-6" />
-        </button>
-      </div>
-
-      {/* Number of Guests */}
-      <div className="mb-8">
-        <label className="block mb-4 font-medium">Number of Guests</label>
-        <div className="flex items-center justify-between gap-6">
-          <button
-            onClick={() => handleGuestChange(-1)}
-            className="p-4 rounded-xl border hover:bg-gray-50 transition-colors"
-          >
-            <Minus className="w-6 h-6" />
-          </button>
-          <span className="text-2xl font-medium transition-all duration-200">{guests}</span>
-          <button
-            onClick={() => handleGuestChange(1)}
-            className="p-4 rounded-xl border hover:bg-gray-50 transition-colors"
-          >
-            <Plus className="w-6 h-6" />
-          </button>
-        </div>
-      </div>
-
-      {/* Special Requests */}
-      <div className="space-y-6 mb-8">
-        <label className="flex items-center justify-between cursor-pointer">
-          <span>Early check-in if available</span>
-          <div className="relative">
-            <input type="checkbox" className="sr-only peer" />
-            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-500 peer-hover:bg-gray-300 transition-colors"></div>
-            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-full"></div>
-          </div>
-        </label>
-        <label className="flex items-center justify-between cursor-pointer">
-          <span>Late check-out if available</span>
-          <div className="relative">
-            <input type="checkbox" className="sr-only peer" />
-            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-500 peer-hover:bg-gray-300 transition-colors"></div>
-            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-full"></div>
-          </div>
-        </label>
-      </div>
-
-      {/* Submit Button */}
-      <button
-        onClick={handleBookingSubmit}
-        className="w-full bg-blue-600 text-white py-4 rounded-xl hover:bg-blue-700 transition-colors"
-      >
-        Confirm Booking
-      </button>
-
-
     </div>
-  </div>
-)}
-{isModalOpen && (
-  <SuccessModal
-    isOpen={isModalOpen}
-    onClose={() => setIsModalOpen(false)}
-  />
-)}
-    </main>
+  </main>
+</div>
+
   );
 };
-
 export default AccommodationDetails;

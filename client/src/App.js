@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route }
   from "react-router-dom";
 import AccommodationDetails
@@ -11,14 +11,14 @@ import Picnics from "./pages/Picnics";
 import PicnicDetails from "./pages/PicnicDetails";
 import Services from "./pages/Services";
 import Bookings from "./pages/Bookings";
+import Inquiries from "./pages/Inquiries";
 import AdminDashboard from "./pages/AdminPanel";
-import PaymentModal from "./components/PaymentModal";
+
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
 const App = () => {
   const [bookingItems, setBookingItems] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Add a new item to bookings
   const addBookingItem = (newItem) => {
@@ -32,9 +32,6 @@ const App = () => {
     );
   };
 
-  // Open/close payment modal
-  const openPaymentModal = () => setIsModalOpen(true);
-  const closePaymentModal = () => setIsModalOpen(false);
 
   return (
     <Router>
@@ -62,7 +59,6 @@ const App = () => {
               <Bookings
                 items={bookingItems}
                 removeItem={removeItem}
-                openPaymentModal={openPaymentModal}
               />
             }
           />
@@ -102,16 +98,12 @@ const App = () => {
           <Route path="/addstays"
             element={<AddStays />}
           />
+          <Route path="/inquiries"
+            element={<Inquiries />}
+          />
         </Routes>
       </main>
 
-      {/* Payment Modal */}
-      {isModalOpen && (
-        <PaymentModal
-          bookingItems={bookingItems}
-          closeModal={closePaymentModal}
-        />
-      )}
 
       {/* Footer */}
       <Footer />

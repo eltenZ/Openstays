@@ -1,7 +1,7 @@
 import React from 'react';
 import { MapPin, Calendar, Users, Edit } from 'lucide-react';
 
-export const TripDetailsCard = ({ holiday }) => {
+export const TripDetailsCard = ({ holiday, booking }) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       <div className="p-5">
@@ -13,7 +13,8 @@ export const TripDetailsCard = ({ holiday }) => {
             <Edit size={16} />
           </button>
         </div>
-        <p className="text-gray-500 mt-2">{holiday.description}</p>
+        
+
         <div className="flex flex-wrap gap-4 mt-4">
           <div className="flex items-center text-sm text-gray-600">
             <MapPin size={16} className="mr-1.5" />
@@ -28,38 +29,30 @@ export const TripDetailsCard = ({ holiday }) => {
             <span>{holiday.participants.join(', ')}</span>
           </div>
         </div>
+
+        {/* Booking Info (if available) */}
+        {booking && (
+          <div className="mt-5 p-4 bg-blue-50 rounded-md border border-blue-100">
+            <h3 className="font-medium mb-2">Your Reservation</h3>
+            <p>
+              <strong>Check-in:</strong> {booking.checkIn.toDateString()}
+            </p>
+            <p>
+              <strong>Check-out:</strong> {booking.checkOut.toDateString()}
+            </p>
+            <p>
+              <strong>Nights:</strong> {booking.nights}
+            </p>
+            <p>
+              <strong>Price per night:</strong> KES {booking.price.toLocaleString()}
+            </p>
+            <p className="font-medium">
+              <strong>Total:</strong> KES {(booking.price * booking.nights).toLocaleString()}
+            </p>
+          </div>
+        )}
       </div>
-      <div className="border-t border-gray-200 p-5">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-medium">Itinerary</h3>
-          <button className="text-sm text-gray-600 hover:text-black">
-            + Add Item
-          </button>
-        </div>
-        <ul className="space-y-3">
-          <li className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-            <div>
-              <h4 className="font-medium">Luxury Beach Villa in Diani</h4>
-              <p className="text-sm text-gray-500">Accommodation • 4 nights</p>
-            </div>
-            <span className="text-sm font-medium">KES 30,000</span>
-          </li>
-          <li className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-            <div>
-              <h4 className="font-medium">Mombasa City Tour</h4>
-              <p className="text-sm text-gray-500">Experience • Half day</p>
-            </div>
-            <span className="text-sm font-medium">KES 8,000</span>
-          </li>
-          <li className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-            <div>
-              <h4 className="font-medium">Kilifi Cultural Experience</h4>
-              <p className="text-sm text-gray-500">Experience • Full day</p>
-            </div>
-            <span className="text-sm font-medium">KES 7,000</span>
-          </li>
-        </ul>
-      </div>
-    </div>
+	</div>
+
   );
 };

@@ -20,7 +20,7 @@ const ImageCarousel = ({ imageUrls }) => {
   };
 
   return (
-    <div className="relative w-full h-[500px] overflow-hidden rounded-2xl">
+    <div className="relative w-full h-[500px] overflow-hidden">
       <img
         src={imageUrls[currentIndex]}
         alt={`Slide ${currentIndex + 1}`}

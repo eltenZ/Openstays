@@ -2,7 +2,7 @@ import React, { useState } from 'react'; import { Link } from 'react-router-dom'
 
 const Header = () => { const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-const navLinks = [ { label: 'Accommodations', to: '/' }, { label: 'Experiences', to: '/trips' }, { label: 'Contact', to: '/contact' }, ];
+const navLinks = [ { label: 'Accommodations', to: '/' }, { label: 'Experiences', to: '/experiences' }, { label: 'Contact', to: '/contact' }, ];
 
 return ( <header className="bg-white shadow-sm py-4 px-6 md:px-10 lg:px-16 fixed top-0 left-0 right-0 z-20"> <div className="flex justify-between items-center">
 
@@ -34,14 +34,13 @@ return ( <header className="bg-white shadow-sm py-4 px-6 md:px-10 lg:px-16 fixed
         to="/admin"
         className="p-2 rounded-full text-gray-600 hover:bg-gray-100"
       >
-        <User className="w-6 h-6" />
       </Link>
     </div>
 
     {/* Mobile profile icon */}
     <Link
       to="/admin"
-      className="md:hidden p-2 rounded-full text-gray-600 hover:bg-gray-100"
+      className="hidden p-2 rounded-full text-gray-600 hover:bg-gray-100"
     >
       <User className="w-6 h-6" />
     </Link>

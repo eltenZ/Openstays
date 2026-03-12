@@ -9,11 +9,9 @@ export const Sidebar = ({ isOpen, closeSidebar }) => {
   // Define your dashboard routes
   const navItems = [
     { icon: <LayoutDashboard size={18} />, label: 'Reservation', path: '/dashboard/reservation' },
-    { icon: <CheckSquare size={18} />,    label: 'Selections',   path: '/dashboard/selections' },
+    
     { icon: <CreditCard size={18} />,     label: 'Payments',     path: '/dashboard/payments' },
-    { icon: <Bell size={18} />,           label: 'Notifications',path: '/dashboard/notifications' },
-    { icon: <MessageSquare size={18} />,  label: 'Group Chat',   path: '/dashboard/group-chat' },
-    { icon: <Star size={18} />,           label: 'Reviews',      path: '/dashboard/reviews' },
+   
   ];
 
   return (
@@ -29,7 +27,7 @@ export const Sidebar = ({ isOpen, closeSidebar }) => {
       {/* Sidebar */}
       <aside
         className={`
-          fixed md:static top-0 left-0 h-full z-30 bg-white w-64
+          fixed hidden md:static top-0 left-0 h-full z-30 bg-white w-64
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           border-r border-gray-200

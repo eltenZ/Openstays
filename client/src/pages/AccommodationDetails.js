@@ -1,6 +1,6 @@
 // src/pages/AccommodationDetails.js
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeftIcon } from "lucide-react";
 
 import ImageCarousel from "../components/ImageCarousel";
@@ -42,36 +42,49 @@ const AccommodationDetails = ({ addBookingItem }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [unavailableDates, setUnavailableDates] = useState([]);  // ← always an array
   const [totalPrice, setTotalPrice] = useState(null);
-
+  const navigate = useNavigate();
   // Fetch accommodation details
-  useEffect(() => {
-    async function fetchDetails() {
-      try {
-	setLoading(true); // Reset loading state
-        const res = await fetch(`http://localhost:5000/api/accommodation/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch accommodation details");
-        const data = await res.json();
+useEffect(() => {
+  async function fetchDetails() {
+    try {
+      setLoading(true);
+      setError(null);
 
-         // Split image_urls into an array and prefix with the server's base URL
-      data.image_urls = data.image_urls
-      ? data.image_urls.split(",").map((url) => `http://localhost:5000/${url.trim()}`)
-      : [];
-      
-        data.amenities = data.amenities.split(",").map((a) => a.trim());
-        setAccommodation(data);
- setAccommodation({
- ...data,
-  // ensure we have an array even if DB returns null
- highlights: Array.isArray(data.highlights) ? data.highlights : []
- });
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+      // Reset dependent state on ID change
+      setSelectedDates({ checkIn: null, checkOut: null });
+      setUnavailableDates([]);
+      setTotalPrice(null);
+
+      const res = await fetch(`http://localhost:5000/api/accommodation/${id}`);
+      if (!res.ok) throw new Error("Failed to fetch accommodation details");
+
+      const data = await res.json();
+
+      // Normalize fields
+      const image_urls = data.image_urls
+        ? data.image_urls.split(",").map((url) => `http://localhost:5000/${url.trim()}`)
+        : [];
+      const amenities = data.amenities
+        ? data.amenities.split(",").map((a) => a.trim())
+        : [];
+      const highlights = Array.isArray(data.highlights) ? data.highlights : [];
+
+      setAccommodation({
+        ...data,
+        image_urls,
+        amenities,
+        highlights,
+      });
+    } catch (err) {
+      setError(err.message);
+      setAccommodation(null);
+    } finally {
+      setLoading(false);
     }
-    fetchDetails();
-  }, [id]);
+  }
+
+  fetchDetails();
+}, [id]); // ← key: refetch whenever the accommodation ID changes
 
   // Fetch availability whenever month or id changes
   useEffect(() => {
@@ -120,42 +133,45 @@ const AccommodationDetails = ({ addBookingItem }) => {
     setCurrentMonth(newMonth);
   };
 
-  const handleBookingSubmit = () => {
-    const { checkIn, checkOut } = selectedDates;
-    if (!checkIn || !checkOut) return;
-    const nights = Math.ceil(
-      (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    const newBooking = {
-      id: Date.now().toString(),
-      name: accommodation.title,
-      location: accommodation.location,
-      price: accommodation.price_per_night,
-      nights,
-      checkIn,
-      checkOut,
-      hostId: accommodation.host_id,
-      amenities: accommodation.amenities,
-    };
-    addBookingItem && addBookingItem(newBooking);
-    setSelectedDates({ checkIn: null, checkOut: null });
+// Capture reservation data
+const handleReserve = () => {
+  const { checkIn, checkOut } = selectedDates;
+
+  if (!checkIn || !checkOut) {
+    alert("Please select check-in and check-out dates");
+    return;
+  }
+
+  const nights = Math.ceil(
+    (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  const bookingData = {
+    id: Date.now().toString(),
+    name: accommodation.title,
+    location: accommodation.location,
+    price: accommodation.price_per_night,
+    nights,
+    checkIn,
+    checkOut,
+    hostId: accommodation.host_id,
+    amenities: accommodation.amenities,
   };
+
+  // Navigate to the Inquiry page and pass the booking data
+  navigate("/inquiries", { state: { booking: bookingData } });
+
+  // Optional: clear selected dates if user navigates back
+  setSelectedDates({ checkIn: null, checkOut: null });
+};
+
 
   if (loading) return <div className="text-center py-12">Loading...</div>;
   if (error) return <div className="text-center py-12 text-red-600">Error: {error}</div>;
 
   return (
   <div className="w-full bg-white">
-  {/* Header Navigation */}
-  <div className="px-4 py-4 border-b border-gray-200">
-    <div className="max-w-7xl flex items-center">
-      <a href="#" className="flex items-center text-gray-600 hover:text-gray-900">
-        <ChevronLeftIcon size={16} />
-        <span className="ml-1 text-sm">Back to search results</span>
-      </a>
-    </div>
-  </div>
-
+  
   {/* Main content */}
   <main className="max-w-7xl mx-auto px-4 py-6">
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -199,7 +215,7 @@ const AccommodationDetails = ({ addBookingItem }) => {
       </div>
     )}
     <button
-      onClick={handleBookingSubmit}
+      onClick={handleReserve}
       className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
     >
       Reserve
@@ -272,7 +288,7 @@ const AccommodationDetails = ({ addBookingItem }) => {
             )}
 
             <button
-              onClick={handleBookingSubmit}
+              onClick={handleReserve}
               className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
             >
               Reserve

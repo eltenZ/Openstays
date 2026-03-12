@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CalendarIcon, BedDoubleIcon, HomeIcon, WifiIcon, CarIcon } from 'lucide-react';
+import { useCallback } from "react";
 import PriceSlider from './PriceSlider';
 import DateSelector from './DateSelector';
 
@@ -22,6 +23,10 @@ const FilterPanel = ({ isMobile = false, applyFilters, availableAmenities }) => 
   const handleRoomSelect = (value) => {
     setRooms(value === '4+' ? 4 : value);
   };
+
+const handlePriceChange = useCallback((minVal, maxVal) => {
+    setPriceRange([minVal, maxVal]);
+  }, [setPriceRange]);
 
   const handleBedSelect = (value) => {
     setBeds(value === '4+' ? 4 : value);
@@ -51,11 +56,11 @@ const FilterPanel = ({ isMobile = false, applyFilters, availableAmenities }) => 
         <h3 className="text-md font-medium mb-3 text-gray-800">
           Price Range (KES)
         </h3>
-        <PriceSlider 
-          min={5000} 
-          max={100000} 
-          onChange={(minVal, maxVal) => setPriceRange([minVal, maxVal])}
-        />
+        <PriceSlider
+      min={5000}
+      max={100000}
+      onChange={handlePriceChange}
+    />
       </div>
       {/* Dates */}
       <div className="mb-6">

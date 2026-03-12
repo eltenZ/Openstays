@@ -16,10 +16,10 @@ const PriceSlider = ({ min, max, onChange }) => {
 
   // Notify the parent component whenever the values change.
   useEffect(() => {
-    if (onChange) {
-      onChange(minValue, maxValue);
-    }
-  }, [minValue, maxValue, onChange]);
+  if (onChange) {
+    onChange(minValue, maxValue);
+  }
+}, [minValue, maxValue]);
 
   const minPercentage = ((minValue - min) / (max - min)) * 100;
   const maxPercentage = ((maxValue - min) / (max - min)) * 100;

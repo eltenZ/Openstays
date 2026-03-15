@@ -63,7 +63,7 @@ const handlePriceChange = useCallback((minVal, maxVal) => {
     />
       </div>
       {/* Dates */}
-      <div className="mb-6">
+      <div className="hidden mb-6">
         <h3 className="text-md font-medium mb-3 text-gray-800">Dates</h3>
         <button 
           className="w-full flex items-center justify-between border border-gray-300 rounded-md py-2 px-3 text-left focus:outline-none focus:ring-1 focus:ring-gray-800" 

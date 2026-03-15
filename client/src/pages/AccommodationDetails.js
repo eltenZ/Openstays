@@ -177,7 +177,13 @@ const handleReserve = () => {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Left/Main Column */}
       <div className="lg:col-span-2">
-        <ImageCarousel imageUrls={accommodation.image_urls} />
+        <ImageCarousel
+  imageUrls={
+    Array.isArray(accommodation.image_urls)
+      ? accommodation.image_urls
+      : accommodation.image_urls?.split(',').map(img => img.trim()) || []
+  }
+/>
         <div className="mt-6">
           <AccommodationHeader
             title={accommodation.title}
@@ -222,7 +228,7 @@ const handleReserve = () => {
     </button>
   </div>
 <div className="mt-4 flex justify-between">
-  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+  <button className="hidden text-blue-600 hover:text-blue-800 text-sm font-medium">
     Save to Wishlist
   </button>
   <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
@@ -230,7 +236,7 @@ const handleReserve = () => {
   </button>
 </div>
 
-<div className="mt-6 p-4 bg-gray-50 rounded-lg">
+<div className="hidden mt-6 p-4 bg-gray-50 rounded-lg">
   <h3 className="font-medium text-sm">Not available for your dates?</h3>
   <p className="text-sm text-gray-600 mt-1">
     Get notified when this property becomes available.
@@ -241,10 +247,11 @@ const handleReserve = () => {
 </div>
 </div>
 
-        <hr className="my-8 border-gray-200" />
-        <LocationMap location={accommodation.location} />
+        <hr className="hidden my-8 border-gray-200" />
+        <LocationMap
+location={accommodation.location} />
 
-        <hr className="my-8 border-gray-200" />
+        <hr className="hidden my-8 border-gray-200" />
         <HostInfo
   name={accommodation.host_name}
   photo={accommodation.host_photo}
@@ -258,7 +265,7 @@ const handleReserve = () => {
 />
 
         <hr className="my-8 border-gray-200" />
-        <div className="lg:hidden">
+        <div className="hidden">
            <Reviews accommodationId={id} vertical={false} />
           <hr className="my-8 border-gray-200" />
         </div>
@@ -295,7 +302,7 @@ const handleReserve = () => {
             </button>
 
             <div className="mt-4 flex justify-between">
-              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+              <button className="hidden text-blue-600 hover:text-blue-800 text-sm font-medium">
                 Save to Wishlist
               </button>
               <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
@@ -303,7 +310,7 @@ const handleReserve = () => {
               </button>
             </div>
 
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <div className="hidden mt-6 p-4 bg-gray-50 rounded-lg">
               <h3 className="font-medium text-sm">Not available for your dates?</h3>
               <p className="text-sm text-gray-600 mt-1">
                 Get notified when this property becomes available.
@@ -314,7 +321,7 @@ const handleReserve = () => {
             </div>
           </div>
 
-          <div className="hidden lg:block border border-gray-200 rounded-lg">
+          <div className="hidden border border-gray-200 rounded-lg">
 	 <Reviews accommodationId={id} vertical={true} />
           </div>
         </div>

@@ -20,7 +20,7 @@ const HostInfo = ({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div>
+    <div className="hidden">
       <h2 className="text-xl font-semibold mb-4">Hosted by {name}</h2>
       <div className="flex items-start">
         <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center">

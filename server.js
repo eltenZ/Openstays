@@ -31,7 +31,7 @@ app.use('/images', express.static(path.join(__dirname, 'client/public/images')))
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, 'client/public/uploads');
+    const uploadPath = path.join(__dirname, 'client/public/images');
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
@@ -157,7 +157,7 @@ app.post('/api/bookings', async (req, res) => {
       [accommodation_id, user_id, start_date, end_date]
     );
     res.status(201).json(rows[0]);
-  } catch (err) {
+v  } catch (err) {
     console.error('Error creating booking:', err.message);
     res.status(500).json({ error: 'Failed to create booking' });
   }
@@ -165,24 +165,71 @@ app.post('/api/bookings', async (req, res) => {
 
 // Upload accommodation with images
 app.post('/api/accommodations', upload.array('images'), async (req, res) => {
-  const { title, description, price_per_night, location, city, country, max_guests } = req.body;
-
-  if (!title || !description || !price_per_night || !location || !city || !country || !max_guests) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-
-  const imageUrls = req.files.map(file => `/uploads/${file.filename}`);
   try {
+    console.log("Body:", req.body);
+    console.log("Files:", req.files);
+
+    const {
+      title,
+      description,
+      price_per_night,
+      location,
+      city,
+      country,
+      max_guests,
+      bedrooms,
+      bathrooms,
+      amenities
+    } = req.body;
+
+    // Validate required fields
+    if (!title || !description || !price_per_night || !location || !city || !country || !max_guests || !bedrooms || !bathrooms) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Convert types
+    const price = parseFloat(price_per_night);
+    const guests = parseInt(max_guests, 10);
+    const beds = parseInt(bedrooms, 10);
+    const baths = parseInt(bathrooms, 10);
+
+    // Process images
+    const imageUrls = req.files
+      ? req.files.map(file => `images/${file.filename}`)
+      : [];
+
     const { rows } = await pool.query(
       `INSERT INTO accommodations
-       (title, description, price_per_night, location, city, country, max_guests, images)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [title, description, price_per_night, location, city, country, max_guests, imageUrls]
+       (host_id, title, description, price_per_night, location, city, country, max_guests, image_urls, amenities, status, is_available, bedrooms, bathrooms)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+       RETURNING *`,
+      [
+        1,
+        title,
+        description,
+        price,
+        location,
+        city,
+        country,
+        guests,
+        imageUrls.join(', '),
+        amenities,
+        'available',
+        true,
+        beds,
+        baths
+      ]
     );
+
+    console.log("DB insert success:", rows[0]);
     res.status(201).json(rows[0]);
+
   } catch (err) {
-    console.error('Error adding accommodation:', err.message);
-    res.status(500).json({ error: 'Failed to add accommodation' });
+    console.error('Error adding accommodation:', err);
+    res.status(500).json({
+      error: 'Failed to add accommodation',
+      details: err.message
+    });
   }
 });
 

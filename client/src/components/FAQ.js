@@ -25,7 +25,7 @@ const FAQ = ({ faqs }) => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
+    <div className="hidden p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">
         Frequently Asked Questions
       </h2>

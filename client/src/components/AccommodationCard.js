@@ -119,7 +119,7 @@ const AccommodationCard = ({ accommodation, onClick }) => {
           {/* Reserve button */}
           <div className="mt-2">
             <span className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors duration-300 block text-center">
-              Reserve
+              Details
             </span>
           </div>
         </div>

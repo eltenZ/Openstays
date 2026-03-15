@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import AccommodationDetails from "./pages/AccommodationDetails";
 import Home from "./pages/Home";
+import AddStays from "./pages/AddStays";
 import Trips from "./pages/Trips";
 import Inquiries from "./pages/Inquiries";
 import AdminDashboard from "./pages/AdminPanel";
@@ -30,6 +31,7 @@ const App = () => {
           <Route path="/experiences" element={<Trips />} />
 
           <Route path="/admin" element={<AdminDashboard />} />
+	  <Route path="/addStays" element={<AddStays />} />
 
           <Route path="/inquiries" element={<Inquiries />} />
         </Routes>

@@ -24,7 +24,7 @@ export const TripDetailsCard = ({ holiday, booking }) => {
             <Calendar size={16} className="mr-1.5" />
             <span>{holiday.date}</span>
           </div>
-          <div className="flex items-center text-sm text-gray-600">
+          <div className="hidden flex items-center text-sm text-gray-600">
             <Users size={16} className="mr-1.5" />
             <span>{holiday.participants.join(', ')}</span>
           </div>

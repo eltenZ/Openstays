@@ -11,7 +11,7 @@ const LocationMap: React.FC<LocationMapProps> = ({ latitude, longitude, location
   const mapSrc = `https://www.google.com/maps/embed/v1/place?key=YOUR_GOOGLE_MAPS_API_KEY&q=${latitude},${longitude}`;
 
   return (
-    <div className="p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
+    <div className="hidden p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Location</h2>
       <div className="w-full h-64">
         <iframe

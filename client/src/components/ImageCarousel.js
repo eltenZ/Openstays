@@ -5,7 +5,12 @@ const ImageCarousel = ({ imageUrls }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Ensure imageUrls is an array
-  if (!imageUrls || imageUrls.length === 0) return null;
+// Convert string to array if needed
+const images = Array.isArray(imageUrls)
+  ? imageUrls.map(img => img.replace(/^\/+/, '').trim())  // remove leading slashes
+  : imageUrls
+      ?.split(',')
+      .map(img => img.replace(/^\/+/, '').trim()) || [];
 
   const prevSlide = () => {
     setCurrentIndex((prevIndex) =>
@@ -20,7 +25,7 @@ const ImageCarousel = ({ imageUrls }) => {
   };
 
   return (
-    <div className="relative w-full h-[500px] overflow-hidden">
+    <div className="relative w-full h-[500px] overflow-hidden rounded-2xl">
       <img
         src={imageUrls[currentIndex]}
         alt={`Slide ${currentIndex + 1}`}

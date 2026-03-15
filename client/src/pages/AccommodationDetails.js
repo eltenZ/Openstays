@@ -55,7 +55,7 @@ useEffect(() => {
       setUnavailableDates([]);
       setTotalPrice(null);
 
-      const res = await fetch(`http://openstays.onrender.com/api/accommodation/${id}`);
+      const res = await fetch(`https://openstays.onrender.com/api/accommodation/${id}`);
       if (!res.ok) throw new Error("Failed to fetch accommodation details");
 
       const data = await res.json();

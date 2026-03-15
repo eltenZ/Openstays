@@ -26,7 +26,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://openstays.onrender.com/api/accommodations');
+        const response = await fetch('https://openstays.onrender.com/api/accommodations');
         if (!response.ok) {
           throw new Error("Failed to fetch accommodations.");
         }

@@ -36,7 +36,7 @@ useEffect(() => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/accommodations');
+        const response = await fetch('https://openstays.onrender.com/api/accommodations');
         if (!response.ok) {
           throw new Error("Failed to fetch accommodations.");
         }

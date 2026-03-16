@@ -62,7 +62,7 @@ useEffect(() => {
 
       // Normalize fields
       const image_urls = data.image_urls
-        ? data.image_urls.split(",").map((url) => `http://localhost:5000/${url.trim()}`)
+        ? data.image_urls.split(",").map((url) => `https://openstays.onrender.com/${url.trim()}`)
         : [];
       const amenities = data.amenities
         ? data.amenities.split(",").map((a) => a.trim())

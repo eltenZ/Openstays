@@ -55,14 +55,14 @@ useEffect(() => {
       setUnavailableDates([]);
       setTotalPrice(null);
 
-      const res = await fetch(`http://localhost:5000/api/accommodation/${id}`);
+      const res = await fetch(`https://openstays.onrender.com/api/accommodation/${id}`);
       if (!res.ok) throw new Error("Failed to fetch accommodation details");
 
       const data = await res.json();
 
       // Normalize fields
       const image_urls = data.image_urls
-        ? data.image_urls.split(",").map((url) => `http://localhost:5000/${url.trim()}`)
+        ? data.image_urls.split(",").map((url) => `https://openstays.onrender.com/${url.trim()}`)
         : [];
       const amenities = data.amenities
         ? data.amenities.split(",").map((a) => a.trim())

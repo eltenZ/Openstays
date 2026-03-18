@@ -14,7 +14,7 @@ const Experiences = () => {
   useEffect(() => {
     const fetchExperiences = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/experiences");
+        const response = await fetch("https://openstays.onrender.com/api/experiences");
 
         if (!response.ok) {
           throw new Error("Failed to fetch experiences.");

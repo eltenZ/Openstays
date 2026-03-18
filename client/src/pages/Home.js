@@ -3,7 +3,7 @@ import { SearchIcon, FilterIcon } from 'lucide-react';
 import AccommodationCard from '../components/AccommodationCard';
 import FilterPanel from '../components/FilterPanel';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import LoadingScreen from '../components/LoadingScreen';
+import LoadingStatus from '../components/LoadingStatus';
 
 const HomePage = () => {
   const [accommodations, setAccommodations] = useState([]);
@@ -14,7 +14,7 @@ const HomePage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-const [minLoadingDone, setMinLoadingDone] = useState(false);
+
   const navigate = useNavigate(); // Initialize useNavigate
 
   // Handle card click to navigate to the accommodation details page
@@ -22,21 +22,12 @@ const [minLoadingDone, setMinLoadingDone] = useState(false);
     navigate(`/accommodation/${id}`);
   };
 
-// loading timer
-useEffect(() => {
-  const timer = setTimeout(() => {
-    setMinLoadingDone(true);
-  }, 32000); // duration of full sentence sequence
-
-  return () => clearTimeout(timer);
-}, []);
-
 
   // API data fetching and normalization
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://openstays.onrender.com/api/accommodations');
+        const response = await fetch('http://localhost:5000/api/accommodations');
         if (!response.ok) {
           throw new Error("Failed to fetch accommodations.");
         }
@@ -152,7 +143,7 @@ useEffect(() => {
     setFilteredAccommodations(filteredData);
   };
 
-  if (loading || !minLoadingDone) return <LoadingScreen />;
+    if (loading) return <LoadingStatus />;
   if (error) return <div className="error">{error}</div>;
 
   return (

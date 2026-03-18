@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeftIcon } from "lucide-react";
-
+import LoadingStatus from '../components/LoadingStatus';
 import ImageCarousel from "../components/ImageCarousel";
 import AccommodationHeader from "../components/AccommodationHeader";
 import Description from "../components/Description";
@@ -55,14 +55,14 @@ useEffect(() => {
       setUnavailableDates([]);
       setTotalPrice(null);
 
-      const res = await fetch(`https://openstays.onrender.com/api/accommodation/${id}`);
+      const res = await fetch(`http://localhost:5000/api/accommodation/${id}`);
       if (!res.ok) throw new Error("Failed to fetch accommodation details");
 
       const data = await res.json();
 
       // Normalize fields
       const image_urls = data.image_urls
-        ? data.image_urls.split(",").map((url) => `https://openstays.onrender.com/${url.trim()}`)
+        ? data.image_urls.split(",").map((url) => `http://localhost:5000/${url.trim()}`)
         : [];
       const amenities = data.amenities
         ? data.amenities.split(",").map((a) => a.trim())
@@ -166,7 +166,7 @@ const handleReserve = () => {
 };
 
 
-  if (loading) return <div className="text-center py-12">Loading...</div>;
+  if (loading) return <LoadingStatus />;
   if (error) return <div className="text-center py-12 text-red-600">Error: {error}</div>;
 
   return (

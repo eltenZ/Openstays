@@ -239,28 +239,228 @@ app.post('/api/accommodations', upload.array('images'), async (req, res) => {
   }
 });
 
-// Trip Routes
-// Fetch all trips
-app.get('/api/trips', async (req, res) => {
+// =========================
+// EXPERIENCES API
+// =========================
+
+// ✅ GET ALL EXPERIENCES
+app.get("/api/experiences", async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM trips ORDER BY created_at DESC');
-    res.status(200).json(rows);
-  } catch (error) {
-    console.error('Error fetching trips:', error.message);
-    res.status(500).json({ error: 'Failed to fetch trips' });
+    const result = await pool.query(`
+      SELECT 
+        id,
+        title,
+        location,
+        short_description AS "shortDescription",
+        full_description AS "fullDescription",
+        price_per_person AS "pricePerPerson",
+        duration,
+        age_rating AS "ageRating",
+        category,
+        is_verified AS "isVerified",
+        images AS "imageUrls",
+        highlights
+      FROM experiences
+      ORDER BY created_at DESC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching experiences:", err.message);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-// Fetch trip details by ID
-app.get('/api/trips/:id', async (req, res) => {
+
+// ✅ GET SINGLE EXPERIENCE
+app.get("/api/experiences/:id", async (req, res) => {
   const { id } = req.params;
+
   try {
-    const { rows } = await pool.query('SELECT * FROM trips WHERE id = $1', [id]);
-    if (!rows.length) return res.status(404).json({ error: 'Trip not found' });
-    res.status(200).json(rows[0]);
-  } catch (error) {
-    console.error('Error fetching trip:', error.message);
-    res.status(500).json({ error: 'Failed to fetch trip' });
+    const result = await pool.query(
+      `
+      SELECT 
+        id,
+        title,
+        location,
+        short_description AS "shortDescription",
+        full_description AS "fullDescription",
+        price_per_person AS "pricePerPerson",
+        duration,
+        age_rating AS "ageRating",
+        category,
+        is_verified AS "isVerified",
+        images,
+        highlights
+      FROM experiences
+      WHERE id = $1
+      `,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Experience not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error fetching experience:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+// ✅ CREATE EXPERIENCE (WITH IMAGE UPLOAD SUPPORT)
+app.post("/api/experiences", upload.array("images", 5), async (req, res) => {
+  try {
+    const {
+      title,
+      location,
+      shortDescription,
+      fullDescription,
+      pricePerPerson,
+      duration,
+      ageRating,
+      category,
+      isVerified,
+      highlights
+    } = req.body;
+
+    // 🔥 Convert uploaded files to URLs
+    const imageUrls = req.files
+      ? req.files.map((file) => `/images/${file.filename}`)
+      : [];
+
+    // 🔥 Convert highlights (if sent as string)
+    const parsedHighlights =
+      typeof highlights === "string"
+        ? JSON.parse(highlights)
+        : highlights || [];
+
+    const result = await pool.query(
+      `
+      INSERT INTO experiences (
+        title,
+        location,
+        short_description,
+        full_description,
+        price_per_person,
+        duration,
+        age_rating,
+        category,
+        is_verified,
+        images,
+        highlights
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      RETURNING *
+      `,
+      [
+        title,
+        location,
+        shortDescription,
+        fullDescription,
+        pricePerPerson,
+        duration,
+        ageRating,
+        category,
+        isVerified === "true" || isVerified === true,
+        imageUrls,
+        parsedHighlights
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error("Error creating experience:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+// ✅ UPDATE EXPERIENCE
+app.put("/api/experiences/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const {
+      title,
+      location,
+      shortDescription,
+      fullDescription,
+      pricePerPerson,
+      duration,
+      ageRating,
+      category,
+      isVerified,
+      images,
+      highlights
+    } = req.body;
+
+    const result = await pool.query(
+      `
+      UPDATE experiences SET
+        title = $1,
+        location = $2,
+        short_description = $3,
+        full_description = $4,
+        price_per_person = $5,
+        duration = $6,
+        age_rating = $7,
+        category = $8,
+        is_verified = $9,
+        images = $10,
+        highlights = $11,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $12
+      RETURNING *
+      `,
+      [
+        title,
+        location,
+        shortDescription,
+        fullDescription,
+        pricePerPerson,
+        duration,
+        ageRating,
+        category,
+        isVerified,
+        images,
+        highlights,
+        id
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Experience not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error updating experience:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+// ✅ DELETE EXPERIENCE
+app.delete("/api/experiences/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM experiences WHERE id = $1 RETURNING *",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Experience not found" });
+    }
+
+    res.json({ message: "Experience deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting experience:", err.message);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

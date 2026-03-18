@@ -4,7 +4,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AccommodationDetails from "./pages/AccommodationDetails";
 import Home from "./pages/Home";
 import AddStays from "./pages/AddStays";
-import Trips from "./pages/Trips";
+import AddExperiences from "./pages/addExperiences";
+import Experiences from "./pages/Experiences";
 import Inquiries from "./pages/Inquiries";
 import AdminDashboard from "./pages/AdminPanel";
 import ScrollToTop from "./components/ScrollToTop";
@@ -28,11 +29,11 @@ const App = () => {
             element={<AccommodationDetails />}
           />
 
-          <Route path="/experiences" element={<Trips />} />
+          <Route path="/experiences" element={<Experiences />} />
 
           <Route path="/admin" element={<AdminDashboard />} />
 	  <Route path="/addStays" element={<AddStays />} />
-
+	<Route path="/addExperiences" element={<AddExperiences />} />
           <Route path="/inquiries" element={<Inquiries />} />
         </Routes>
       </main>

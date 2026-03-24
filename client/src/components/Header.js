@@ -15,7 +15,7 @@ return ( <header className="bg-white shadow-sm py-4 px-6 md:px-10 lg:px-16 fixed
         {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
       </button>
       <Link to="/" className="text-2xl font-light text-gray-800">
-        Openstays
+        Watuma.com
       </Link>
     </div>
 

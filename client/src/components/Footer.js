@@ -1,6 +1,6 @@
 import React from 'react'; import { Link } from 'react-router-dom';
 
-const Footer = () => { return ( <footer className="bg-gray-50 border-t py-10 px-6 md:px-10 lg:px-16"> <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8"> {/* OpenStays info */} <div> <h3 className="text-lg font-medium mb-4">Openstays</h3> <p className="text-gray-600 text-sm mb-4"> Luxury accommodations across the Kenyan coast. Experience the beauty of Diani and beyond. </p> <Link
+const Footer = () => { return ( <footer className="bg-gray-50 border-t py-10 px-6 md:px-10 lg:px-16"> <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8"> {/* OpenStays info */} <div> <h3 className="text-lg font-medium mb-4">Openstays</h3> <p className="text-gray-600 text-sm mb-4"> We curate a unique selection of special places to stay, and exceptional experiences along the coast. </p> <Link
 to="/terms"
 className="text-gray-600 hover:text-gray-900 text-sm block"
 > Terms and conditions of our service </Link> </div>
@@ -11,7 +11,7 @@ className="text-gray-600 hover:text-gray-900 text-sm block"
       <p className="text-gray-600 text-sm">
         Diani Beach Road<br />Kwale County, Kenya<br />
         info@openstays.co.ke<br />
-        +254 113919039<br />
+        +254 743753412<br />
         +254 737812530
       </p>
     </div>

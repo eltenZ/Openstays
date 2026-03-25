@@ -12,6 +12,9 @@ import HostInfo from "../components/HostInfo";
 import Reviews from "../components/Reviews";
 import FAQ from "../components/FAQ";
 import BookingCalendar from "../components/BookingCalendar";
+import { useContext } from 'react'
+import { TripContext } from '../context/TripContext'
+
 
 // Helper to convert API’s date‐range records into an array of Date objects that are unavailable.
 function extractUnavailableDates(records) {
@@ -43,6 +46,8 @@ const AccommodationDetails = ({ addBookingItem }) => {
   const [unavailableDates, setUnavailableDates] = useState([]);  // ← always an array
   const [totalPrice, setTotalPrice] = useState(null);
   const navigate = useNavigate();
+ const { addToTrip } = useContext(TripContext)
+
   // Fetch accommodation details
 useEffect(() => {
   async function fetchDetails() {
@@ -145,8 +150,9 @@ const handleReserve = () => {
   const nights = Math.ceil(
     (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
   );
-
+ 
   const bookingData = {
+    type: "accommodation",
     id: Date.now().toString(),
     name: accommodation.title,
     location: accommodation.location,
@@ -154,14 +160,16 @@ const handleReserve = () => {
     nights,
     checkIn,
     checkOut,
-    hostId: accommodation.host_id,
-    amenities: accommodation.amenities,
+    total: nights * accommodation.price_per_night
   };
 
-  // Navigate to the Inquiry page and pass the booking data
-  navigate("/inquiries", { state: { booking: bookingData } });
+  // Add to trip
+  addToTrip(bookingData);
 
-  // Optional: clear selected dates if user navigates back
+  // UX feedback
+  alert(`${accommodation.title} added to your trip`);
+
+  // Reset dates
   setSelectedDates({ checkIn: null, checkOut: null });
 };
 

@@ -6,41 +6,43 @@ import Home from "./pages/Home";
 import AddStays from "./pages/AddStays";
 import AddExperiences from "./pages/addExperiences";
 import Experiences from "./pages/Experiences";
-import Inquiries from "./pages/Inquiries";
 import AdminDashboard from "./pages/AdminPanel";
 import ScrollToTop from "./components/ScrollToTop";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
+// 🔥 Trip context
+import { TripProvider } from "./context/TripContext";
+import Trips from "./components/Trips"; // <-- floating trip modal
+
 const App = () => {
   return (
-    <Router>
-<ScrollToTop />
-      {/* Header */}
-      <Header />
+    <TripProvider>
+      <Router>
+        <ScrollToTop />
 
-      {/* Page content */}
-      <main className="pt-20 pb-16">
-        <Routes>
-          <Route path="/" element={<Home />} />
+        {/* Header */}
+        <Header />
 
-          <Route
-            path="/accommodation/:id"
-            element={<AccommodationDetails />}
-          />
+        {/* Page content */}
+        <main className="pt-20 pb-16">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/accommodation/:id" element={<AccommodationDetails />} />
+            <Route path="/experiences" element={<Experiences />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/addStays" element={<AddStays />} />
+            <Route path="/addExperiences" element={<AddExperiences />} />
+          </Routes>
+        </main>
 
-          <Route path="/experiences" element={<Experiences />} />
+        {/* Footer */}
+        <Footer />
 
-          <Route path="/admin" element={<AdminDashboard />} />
-	  <Route path="/addStays" element={<AddStays />} />
-	<Route path="/addExperiences" element={<AddExperiences />} />
-          <Route path="/inquiries" element={<Inquiries />} />
-        </Routes>
-      </main>
-
-      {/* Footer */}
-      <Footer />
-    </Router>
+        {/* 🔥 Floating Trips Modal */}
+        <Trips />
+      </Router>
+    </TripProvider>
   );
 };
 
